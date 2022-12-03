@@ -1,7 +1,7 @@
 # STAR
+Learning for data with heterogeneity (ICDM'21 Best Paper Award)
 
 ## Paper information
-Learning for data with heterogeneity (ICDM'21 Best Paper Award):
 
 **[ICDM'21]** Yiqun Xie*, Erhu He*, Xiaowei Jia, Han Bao, Xun Zhou, Rahul Ghosh and Praveen Ravirathinam. A Statistically-Guided Deep Network Transformation and Moderation Framework for Data with Spatial Heterogeneity. IEEE International Conference on Data Mining (ICDM'21), 2021.
 
