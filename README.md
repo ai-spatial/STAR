@@ -1,11 +1,17 @@
-# STAR
+# STAR (a <u>s</u>patial <u>t</u>ransformation <u>a</u>nd mode<u>r</u>ation framework)
 Learning for data with heterogeneity (ICDM'21 Best Paper Award)
+
+This repository includes several versions of the framework for different types of machine learning models, organized by different folders:
+* [Deep-learning-models](Deep-learning-models): Fully-connected, convolutional, recurrent, ...
+* [Tree-based-models](Tree-based-models): Random forest
 
 ## Paper information
 
 **[ICDM'21]** Yiqun Xie*, Erhu He*, Xiaowei Jia, Han Bao, Xun Zhou, Rahul Ghosh and Praveen Ravirathinam. A Statistically-Guided Deep Network Transformation and Moderation Framework for Data with Spatial Heterogeneity. IEEE International Conference on Data Mining (ICDM'21), 2021.
 
 **[IJCAI'22]** Yiqun Xie*, Erhu He*, Xiaowei Jia, Han Bao, Xun Zhou, Rahul Ghosh and Praveen Ravirathinam. Statistically-Guided Deep Network Transformation to Harness Heterogeneity in Space (Extended Abstract). The 31st International Joint Conference on Artificial Intelligence (IJCAI'22), Sister Conference Best Paper Track. Invited. 2022.
+
+**[RSE'25]** Yiqun Xie, Anh Nhu, Xiao-Peng Song, Xiaowei Jia, Sergii Skakun, Haijun Li, Zhihao Wang. Accounting for Spatial Variability with Geo-aware Random Forest: A Case Study for US Major Crop Mapping. Remote Sensing of Environment, 2024. (in press)
 
 ```
 @inproceedings{xie2021statistically,
