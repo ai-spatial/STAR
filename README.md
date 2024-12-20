@@ -1,4 +1,4 @@
-# STAR (a <u>s</u>patial <u>t</u>ransformation <u>a</u>nd mode<u>r</u>ation framework)
+# STAR (a <ins>s</ins>patial <ins>t</ins>ransformation <ins>a</ins>nd mode<ins>r</ins>ation framework)
 Learning for data with heterogeneity (ICDM'21 Best Paper Award)
 
 This repository includes several versions of the framework for different types of machine learning models, organized by different folders:
