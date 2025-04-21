@@ -1,5 +1,5 @@
 # Spatial Transformation Framework for Random Forest
-The deep learning version is at: [Deep-learning-models](Deep-learning-models): Fully-connected, convolutional, recurrent, ...
+The deep learning version is at: [Deep-learning-models](/Deep-learning-models): Fully-connected, convolutional, recurrent, ...
 
 ## Paper information
 **[RSE'25]** Yiqun Xie, Anh Nhu, Xiao-Peng Song, Xiaowei Jia, Sergii Skakun, Haijun Li, Zhihao Wang. Accounting for Spatial Variability with Geo-aware Random Forest: A Case Study for US Major Crop Mapping. Remote Sensing of Environment, 2024.
