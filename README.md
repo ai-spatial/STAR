@@ -11,7 +11,7 @@ This repository includes several versions of the framework for different types o
 
 **[IJCAI'22]** Yiqun Xie*, Erhu He*, Xiaowei Jia, Han Bao, Xun Zhou, Rahul Ghosh and Praveen Ravirathinam. Statistically-Guided Deep Network Transformation to Harness Heterogeneity in Space (Extended Abstract). The 31st International Joint Conference on Artificial Intelligence (IJCAI'22), Sister Conference Best Paper Track. Invited. 2022.
 
-**[RSE'25]** Yiqun Xie, Anh Nhu, Xiao-Peng Song, Xiaowei Jia, Sergii Skakun, Haijun Li, Zhihao Wang. Accounting for Spatial Variability with Geo-aware Random Forest: A Case Study for US Major Crop Mapping. Remote Sensing of Environment, 2024. (in press)
+**[RSE'25]** Yiqun Xie, Anh Nhu, Xiao-Peng Song, Xiaowei Jia, Sergii Skakun, Haijun Li, Zhihao Wang. Accounting for Spatial Variability with Geo-aware Random Forest: A Case Study for US Major Crop Mapping. Remote Sensing of Environment, 2024. [Extension for ensemble models using random forest as an example for the remote sensing field]
 
 ```
 @inproceedings{xie2021statistically,
