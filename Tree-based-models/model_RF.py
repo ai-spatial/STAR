@@ -10,7 +10,7 @@
 '''
 
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 import pandas as pd
 
 import sklearn
@@ -22,20 +22,18 @@ from paras import *
 from helper import get_X_branch_id_by_group
 from metrics import *
 
-NUM_LAYERS = 8 #num_layers is the number of non-input layers
+# NUM_LAYERS = 8 #num_layers is the number of non-input layers
 
 '''Model can be easily customized to different deep network architectures.
-The following key functions need to be included (just adding some steps around regular tf functions as needed), which are used in STAR training:
+The following key functions need to be included, which are used in STAR training:
 1. train()
 2. model_complie()
 3. predict(): this is the regular prediction function from X->y (using a single branch), which returns predicted labels
 4. save(): save a branch
 5. load(): load a branch
-6. set_trainable_layers(): used to freeze weights on layers that are not used to construct new branches at a split
 
 Optional (not called during STAR training, used either in model init() or final test):
-7. create_net(): used to construct the network.
-8. predict_test(): this is for STAR's prediction, which make predictions based on which branch a sample belongs to, and returns performance metric values (can change)
+6. predict_test(): this is for STAR's prediction, which make predictions based on which branch a sample belongs to, and returns performance metric values (can change)
 '''
 
 '''This is an example implementation for random forest.'''

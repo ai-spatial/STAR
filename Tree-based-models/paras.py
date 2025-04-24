@@ -145,10 +145,10 @@ N_GROUPS = GRID_DIM[0] * GRID_DIM[1]
 
 
 '''spatial contiguity'''
-CONTIGUITY = False
-REFINE_TIMES = 0
-# CONTIGUITY = True
-# REFINE_TIMES = 3
+# CONTIGUITY = False
+# REFINE_TIMES = 0
+CONTIGUITY = True
+REFINE_TIMES = 3
 
 '''predefined groups such as US counties'''
 # PREDEFINED_GROUPS = True

@@ -10,8 +10,8 @@ from scipy import stats
 
 '''STAR'''
 '''Can be easily customized with the template'''
-from models import DNNmodel, LSTMmodel, UNetmodel#model is easily customizable
-from model_RF_not_for_upload_simplify import RFmodel, save_single, predict_test_group_wise#model is easily customizable
+# from models import DNNmodel, LSTMmodel, UNetmodel#model is easily customizable
+from model_RF import RFmodel, save_single, predict_test_group_wise#model is easily customizable
 from sklearn.ensemble import RandomForestClassifier
 # from customize import generate_groups_nonimg_input#can customize group definition
 from customize import *
@@ -25,7 +25,7 @@ from metrics import get_class_wise_accuracy, get_prf
 
 from partition_opt import get_refined_partitions_all
 
-from data_syn_exp import *
+# from data_syn_exp import *
 
 import pandas as pd
 # import geopandas as gpd
@@ -166,13 +166,13 @@ if __name__ == '__main__':
 		#RF
 		model = RFmodel(dir_ckpt, N_TREES, max_new_forests, max_depth = MAX_TREE_DEPTH)#can add sample_weights_by_class
 		model.train(X[train_list_init], y[train_list_init], branch_id = '', sample_weights_by_class = sample_weights_by_class)#removed in def: sample_weights_by_class = sample_weights_by_class
-	else:
-		if MODEL_CHOICE == 'DNN':
-			model = DNNmodel(path = dir_ckpt)
-		if MODEL_CHOICE == 'LSTM':
-			model = LSTMmodel(path = dir_ckpt)
-		model.model_compile()
-		model.train(X[train_list_init], y[train_list_init], branch_id = '')#'' is the root branch (before any splits)
+	# else:
+	# 	if MODEL_CHOICE == 'DNN':
+	# 		model = DNNmodel(path = dir_ckpt)
+	# 	if MODEL_CHOICE == 'LSTM':
+	# 		model = LSTMmodel(path = dir_ckpt)
+	# 	model.model_compile()
+	# 	model.train(X[train_list_init], y[train_list_init], branch_id = '')#'' is the root branch (before any splits)
 
 	model.save('')#save root branch
 

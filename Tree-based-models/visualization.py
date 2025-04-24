@@ -6,7 +6,7 @@
 # @License: MIT License
 
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 import pandas as pd
 
 from paras import *
@@ -338,4 +338,3 @@ def generate_vis_image_for_all_groups(grid, dir, ext = '', vmin = None, vmax = N
   # cbar.ax.set_yticklabels(unique_branch.tolist())#list(s_branch.keys())
 
   fig.savefig(dir + '/' + 'result_group' + ext + '.png')
-  

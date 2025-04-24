@@ -6,10 +6,10 @@
 # @License: MIT License
 
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 import pandas as pd
 
-from data_syn_exp import get_swap_group_list
+# from data_syn_exp import get_swap_group_list
 
 from paras import *
 
@@ -19,7 +19,8 @@ def load_data():
     y = np.load('/content/drive/MyDrive/Spatialnet/Sentinel_2018_T11SKA_data/label_T11SKA_20m.npy').astype(int)
     if ONEHOT:
         y = np.reshape(y,[-1])
-        y = tf.one_hot(y, NUM_CLASS).numpy()
+        # y = tf.one_hot(y, NUM_CLASS).numpy()
+        y = np.eye(NUM_CLASS)[y].astype(int)
     else:
         y = label_raw
         y = np.reshape(y,[-1])
@@ -95,7 +96,8 @@ def load_data_us_cdl(full = False, from_raw = True, crop_type = 'corn', onehot =
 
 def y_to_onehot(y):
   y = np.reshape(y,[-1])
-  y = tf.one_hot(y, NUM_CLASS).numpy()
+  # y = tf.one_hot(y, NUM_CLASS).numpy()
+  y = np.eye(NUM_CLASS)[y].astype(int)
   y = y.astype(int)
   return y
 

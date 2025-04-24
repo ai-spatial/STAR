@@ -6,7 +6,7 @@
 # @License: MIT License
 
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 import pandas as pd
 from scipy import stats
 
@@ -20,7 +20,7 @@ from customize import *
 
 from visualization import *
 
-import models
+# import models
 
 def partition(model, X, y,
                      X_group , X_set, X_id, X_branch_id,

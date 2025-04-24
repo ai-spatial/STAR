@@ -5,7 +5,7 @@
 # @Last modified time: 2025-04-21
 # @License: MIT License
 
-import models#tuning code
+# import models#tuning code
 
 def base_eval_using_merged_branch_data(model, X_val, branch_id):
   '''
@@ -79,13 +79,13 @@ def train_and_eval_two_branch(model, X0_train, y0_train, X0_val,
 #     print('overwrite branch', branch_id + '1', ' weights with branch', branch_id)
 
 
-def decay_schedule(epoch, lr):
-  if (epoch % 10 == 0) and (epoch != 0):
-  # if (epoch % 50 == 0) and (epoch != 0):
-      lr = 0.01
-      # lr = lr * 0.95
-      print("learning rate: ", lr)
-  return lr
+# def decay_schedule(epoch, lr):
+#   if (epoch % 10 == 0) and (epoch != 0):
+#   # if (epoch % 50 == 0) and (epoch != 0):
+#       lr = 0.01
+#       # lr = lr * 0.95
+#       print("learning rate: ", lr)
+#   return lr
 
 def save_single(model, path, name = 'single'):
     #only saves the current new forest (newly added one)

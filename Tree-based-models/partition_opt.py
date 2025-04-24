@@ -8,7 +8,7 @@
 #notes: added semantic segmentation
 
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 import pandas as pd
 from scipy import stats
 
@@ -39,13 +39,15 @@ def get_class_wise_stat(y_true, y_pred, y_group, mode = MODE, onehot = ONEHOT):
     # n_sample = y_true.shape[0]
 
     if len(y_true.shape)==1:
-      y_true = tf.one_hot(y_true, NUM_CLASS)
-      y_pred = tf.one_hot(y_pred, NUM_CLASS)
-    else:
-    #this is to make coding consistent (tf functions might be used in this function when implementing the RF version)
-      y_true = tf.convert_to_tensor(y_true)
-      y_pred = tf.convert_to_tensor(y_pred)
-      # tf.convert_to_tensor(numpy_array, dtype=tf.float32)
+      # y_true = tf.one_hot(y_true, NUM_CLASS)
+      # y_pred = tf.one_hot(y_pred, NUM_CLASS)
+      y_true = np.eye(NUM_CLASS)[y_true].astype(int)
+      y_pred = np.eye(NUM_CLASS)[y_pred].astype(int)
+    # else:
+    # #this is to make coding consistent (tf functions might be used in this function when implementing the RF version)
+    #   y_true = tf.convert_to_tensor(y_true)
+    #   y_pred = tf.convert_to_tensor(y_pred)
+    #   # tf.convert_to_tensor(numpy_array, dtype=tf.float32)
 
     #reshape image or time-series labels
     #can handle shapes of N x m x m x k, where m is img size for semantic segmentation
@@ -56,17 +58,20 @@ def get_class_wise_stat(y_true, y_pred, y_group, mode = MODE, onehot = ONEHOT):
       # for dim in range(1,n_dims-1):
       #   data_point_size *= y_true.shape[dim]
       n_pre = y_true.shape[0]
-      y_true = tf.reshape(y_true, [-1,NUM_CLASS])#tf.reshape takes numpy arrays
-      y_pred = tf.reshape(y_pred, [-1,NUM_CLASS])
+      y_true = y_true.reshape(-1, NUM_CLASS)
+      y_pred = y_pred.reshape(-1, NUM_CLASS)
+      # y_true = tf.reshape(y_true, [-1,NUM_CLASS])#tf.reshape takes numpy arrays
+      # y_pred = tf.reshape(y_pred, [-1,NUM_CLASS])
       n_after = y_true.shape[0]
 
       data_point_size = int(n_after/n_pre)
       y_group = y_group.astype(int)
       y_group = np.repeat(y_group, data_point_size)
 
-    stat = tf.keras.metrics.categorical_accuracy(y_true, y_pred)
-    stat = stat.numpy()
-    y_true = np.array(y_true)
+    stat = (np.argmax(y_true, axis=1) == np.argmax(y_pred, axis=1)).astype(int)
+    # stat = tf.keras.metrics.categorical_accuracy(y_true, y_pred)
+    # stat = stat.numpy()
+    # y_true = np.array(y_true)
 
     #select_class (should not be used before categorical_accuracy,
     #which is not correct when there is only one class)
@@ -91,8 +96,9 @@ def get_class_wise_stat(y_true, y_pred, y_group, mode = MODE, onehot = ONEHOT):
     #   y_pred = tf.reshape(y_pred, [-1,NUM_CLASS])
 
     #may (or may not) need to revise for regression using scan methods!!!
-    stat = tf.keras.losses.MSE(y_true, y_pred)
-    stat = stat.numpy()
+    # stat = tf.keras.losses.MSE(y_true, y_pred)
+    # stat = stat.numpy()
+    score = np.square(y_true - y_pred)
     stat_id, stat_value = groupby_sum(stat, y_group)
 
     return stat_id, stat_value
@@ -383,22 +389,27 @@ def get_score(y_true, y_pred, mode = MODE):
   score = None
   if mode == 'classification':
     if len(y_true.shape)==1:
-      y_true = tf.one_hot(y_true, NUM_CLASS)
-      y_pred = tf.one_hot(y_pred, NUM_CLASS)
-    else:
-    #this is to make coding consistent for later parts of the function (where tf functions are used)
-      y_true = tf.convert_to_tensor(y_true)
-      y_pred = tf.convert_to_tensor(y_pred)
-      # tf.convert_to_tensor(numpy_array, dtype=tf.float32)
+      # y_true = tf.one_hot(y_true, NUM_CLASS)
+      # y_pred = tf.one_hot(y_pred, NUM_CLASS)
+      y_true = np.eye(NUM_CLASS)[y_true].astype(int)
+      y_pred = np.eye(NUM_CLASS)[y_pred].astype(int)
+    # else:
+    # #this is to make coding consistent for later parts of the function (where tf functions are used)
+    #   y_true = tf.convert_to_tensor(y_true)
+    #   y_pred = tf.convert_to_tensor(y_pred)
+    #   # tf.convert_to_tensor(numpy_array, dtype=tf.float32)
 
     #reshape image or time-series labels
     if len(y_true.shape)>=3:
-      y_true = tf.reshape(y_true, [-1,NUM_CLASS])#tf.reshape takes numpy arrays
-      y_pred = tf.reshape(y_pred, [-1,NUM_CLASS])
+      y_true = y_true.reshape(-1, NUM_CLASS)
+      y_pred = y_pred.reshape(-1, NUM_CLASS)
+      #https://numpy.org/doc/stable/reference/generated/numpy.ndarray.reshape.html#numpy.ndarray.reshape
+      # y_true = tf.reshape(y_true, [-1,NUM_CLASS])#tf.reshape takes numpy arrays
+      # y_pred = tf.reshape(y_pred, [-1,NUM_CLASS])
 
-    # y_pred = to_categorical(np.argmax(arr, axis=1), 3)
-    score = tf.keras.metrics.categorical_accuracy(y_true, y_pred)
-    score = score.numpy()
+    score = (np.argmax(y_true, axis=1) == np.argmax(y_pred, axis=1)).astype(int)
+    # score = tf.keras.metrics.categorical_accuracy(y_true, y_pred)
+    # score = score.numpy()
 
     #select_class
     #here need to remove the rows from non-selected classes
@@ -407,16 +418,21 @@ def get_score(y_true, y_pred, mode = MODE):
       score_select = np.zeros(score.shape)
       for i in range(SELECT_CLASS.shape[0]):
         class_id = int(SELECT_CLASS[i])
-        score_select[y_true.numpy()[:,class_id]==1] = 1
+        # score_select[y_true.numpy()[:,class_id]==1] = 1
+        score_select[y_true[:,class_id]==1] = 1
       score = score[score_select.astype(bool)]
       '''Check what if score is empty?
       '''
 
   else:
-    score = tf.keras.losses.MSE(y_true, y_pred, reduction=tf.keras.losses.Reduction.NONE)#reduction=tf.keras.losses.Reduction.NONE
+    #GeoRF code is not tested for regression yet
+    score = np.square(y_true - y_pred)
+    #the reduction option is deprecated
+    #without reduction it might be ok if each element is still surrounded by []
+    # score = tf.keras.losses.MSE(y_true, y_pred, reduction=tf.keras.losses.Reduction.NONE)#reduction=tf.keras.losses.Reduction.NONE
     #check this for regression!!!
     #careful with dimension when using Reduction.None (last dimension must be for prediction-target dimensions): https://www.tensorflow.org/api_docs/python/tf/keras/losses/Reduction
-    score = - score.numpy()
+    # score = - score.numpy()
 
   return score
 
