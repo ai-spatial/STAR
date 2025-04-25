@@ -142,41 +142,6 @@ def dice_coef(y_true, y_pred, sample_weights = None):
     intersection = tf.reduce_sum(y_true_f * y_pred_f)
     return (2. * intersection + smooth) / (tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + smooth)
 
-def recall(y_true, y_pred, sample_weights = None):
-    smooth = 1.0
-
-    # y_true = y_true[:,:,:,1]
-    # y_pred = y_pred[:,:,:,1]
-    y_true = convert_to_flat_tensor(y_true)
-    y_pred = tf.cast(tf.math.argmax(y_pred, axis = -1), tf.float32)
-
-    y_true_f = tf.keras.layers.Flatten()(y_true)
-    y_pred_f = tf.keras.layers.Flatten()(y_pred)
-    # y_pred_f = tf.cast((y_pred_f > 0.5), tf.float32)
-
-    tp = tf.reduce_sum(y_true_f * y_pred_f)
-    fn = tf.reduce_sum(y_true_f * (1-y_pred_f))
-
-    return (tp/(tp+fn+smooth))
-
-def precision(y_true, y_pred, sample_weights = None):
-    smooth = 1.0
-
-    # y_true = y_true[:,:,:,1]
-    # y_pred = y_pred[:,:,:,1]
-    y_true = convert_to_flat_tensor(y_true)
-    y_pred = tf.cast(tf.math.argmax(y_pred, axis = -1), tf.float32)
-
-    y_true_f = tf.keras.layers.Flatten()(y_true)
-    y_pred_f = tf.keras.layers.Flatten()(y_pred)
-    # y_pred_f = tf.cast((y_pred_f > 0.5), tf.float32)
-
-
-    tp = tf.reduce_sum(y_true_f * y_pred_f)
-    fp = tf.reduce_sum((1-y_true_f) * y_pred_f)
-
-    return (tp/(tp+fp+smooth))
-
 def dice_coef_loss(y_true, y_pred, sample_weights = None):
     # GT and predicted have shape = [batch_size, d0, .. dN]
     return 1-dice_coef(y_true, y_pred)
