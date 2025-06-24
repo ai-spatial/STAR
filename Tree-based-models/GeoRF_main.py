@@ -50,7 +50,7 @@ if __name__ == '__main__':
 	#X_loc stores coordinates (e.g., lat and lon) for each data point in X
 	# X, y, X_loc = load_data_us_cdl(full = True, from_raw = False, crop_type = 'corn', onehot = False)
 	#Demo data is a sampled version (50%) and uses 13 out of 333 features to reduce the storage cost and execution time.
-	X, y, X_loc = load_demo_data(crop_type='corn')
+	X, y, X_loc = load_demo_data()
 
 	#prepare groups (minimum spatial units for space-partitioning and location groupings, e.g., using a grid)
 	xmin, xmax, ymin, ymax = get_spatial_range(X_loc)#the X_DIM in config assumes min is 0.
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 	#max_model_depth: max depth of the hierarchical partitioning in GeoRF
 	#max_depth: max depth of each tree in random forest (10 used in demo to reduce execution time)
 	#n_jobs: number of cores to use to run the model in parallel
-	georf = GeoRF(min_model_depth = MIN_DEPTH,	max_model_depth = MAX_DEPTH, n_jobs = N_JOBS, max_depth=10)
+	georf = GeoRF(min_model_depth = MIN_DEPTH,	max_model_depth = MAX_DEPTH, n_jobs = N_JOBS)#, max_depth=10
 	#definition with all parameters
 	#dir: defaulted to "result" in code (auto-generated), no need to change
 	# georf = GeoRF(min_model_depth = MIN_DEPTH,	max_model_depth = MAX_DEPTH, dir = "",

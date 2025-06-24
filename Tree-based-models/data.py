@@ -73,26 +73,26 @@ def img_to_patch(X, y, size = 128, step_size = 64, return_loc = False):
     return X_new, y_new
 
 
-def load_demo_data(full = False, crop_type = 'corn', onehot = ONEHOT):
+def load_demo_data(full = False, onehot = ONEHOT):
   '''
   Load demo dataset for CONUS crop classification.
   Data points: This is a subset of all data points (10% random samples) for the full dataset to reduce the size.
   Features: For X, the full data has 333 features per data point, including 10 band values over 33 time steps + 3 topographical features.
       The demo data has 13 features (10 band values from August + 3 topographical features).
-  Labels: Same set of 10% randomly sampled data points. Label is for corn vs. non-corn.
+  Labels: Same set of 10% randomly sampled data points. Label is binary.
   '''
   CROP_CHOICE = crop_type#used earlier
   #soybean, corn, wheat, cotton
 
   if full:
     X = np.load('X_full.npy')#full data is very large in size
-    y = np.load('y_' + CROP_CHOICE + '.npy')
+    y = np.load('y.npy')
     X_loc = np.load('X_loc.npy')
   else:
     X = np.load('X_demo.npy')
-    y = np.load('y_' + CROP_CHOICE + '_demo.npy')
+    y = np.load('y_demo.npy')
     X_loc = np.load('X_loc_demo.npy')
-    
+
   if onehot:
     y = y_to_onehot(y)
 
