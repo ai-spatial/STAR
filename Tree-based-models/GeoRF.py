@@ -104,18 +104,7 @@ class GeoRF():
 
 		#toggle between prints
 		self.original_stdout = sys.stdout
-
-
-	'''Needs for new functions!!!
-		done* Define a function to generate X_set using VAL_RATIO
-		done (generate_groups_nonimg_input(X_loc, step_size) in customize)* Define a function to generate X_group for grid settings
-		done* Define a function to only generate X_id.
-		done (leave in config)* Add attributes such as: flex_ratio (if passed as paras)
-		* Parameters such as min & max_depth can only show up either in config file or in georf definition,
-			otherwise inconsistencies may occur. If they are only used as default, that's okay but need to
-			make sure the values are passed to the functions when called.
-		* Remove image generations in training
-	'''
+		
 
 	#Train GeoRF
 	def fit(self, X, y, X_group, X_set = None, val_ratio = VAL_RATIO, print_to_file = True):#X_loc is unused
