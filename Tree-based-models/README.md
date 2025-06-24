@@ -14,7 +14,7 @@ The deep learning version is at: [Deep-learning-models](/Deep-learning-models): 
 
 ## Comparing to Random Forest:
 - As a spatially-explicit model (geo-aware version of RF), GeoRF requires an additional input X_loc that stores locations of data points in (X,y).
-- GeoRF needs a group assignment (minimum spatial units) as demonstrated in the code and visualizations in the paper. The group definitions can be customized in customize.py based on data, applications and tasks.
+- GeoRF needs a group assignment (minimum spatial units, e.g., grid cells as groups of locations) as demonstrated in the code and discussed/visualized in the paper. The group definitions can be customized in customize.py based on data, applications and tasks.
 
 ## Sample demo data
 - Features X ([X_demo.npy](https://drive.google.com/file/d/1sLM2Los_OHiJho2byLBMYLqkW_LEFtA5/view?usp=drive_link))
@@ -24,24 +24,24 @@ The deep learning version is at: [Deep-learning-models](/Deep-learning-models): 
 ## Example usage:
 For details, please refer to [GeoRF_main.py](GeoRF_main.py)
 
-Create new GeoRF model.
+Create new GeoRF model:
 ```
 georf = GeoRF()#with optional parameters
 ```
-Define groups of data points (minimum spatial units in partitioning).
+Define groups of data points (minimum spatial units in partitioning):
 ```
 group_gen = GroupGenerator(xmin, xmax, ymin, ymax, cell_size)#example using grid cells to define groups
 X_group = group_gen.get_groups(X_loc)#convert locations to group IDs
 ```
-Train GeoRF.
+Train GeoRF:
 ```
-georf.fit(X, y, X_group)
+georf.fit(X, y, X_group)#locations grouped in X_group
 ```
-Make predictions.
+Make predictions:
 ```
-georf.predict(X_test)
+georf.predict(X_test, X_test_group)
 ```
-Evaluate model.
+Evaluate model:
 ```
 georf.evaluate(X_test, y_test, X_test_group)#X_test_group is generated in the same way as training
 ```
