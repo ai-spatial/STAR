@@ -18,7 +18,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 import pickle
 
-from paras import *
+from config import *
 from helper import get_X_branch_id_by_group
 from metrics import *
 
@@ -40,7 +40,8 @@ Optional (not called during STAR training, used either in model init() or final 
 
 class RFmodel():
 
-  def __init__(self, path, n_trees_unit, max_new_forests, num_class = NUM_CLASS, max_depth=None,
+  def __init__(self, path, n_trees_unit,
+               max_new_forests = [1,1,1,1,1,1], num_class = NUM_CLASS, max_depth=None,
                increase_thrd = 0.05, random_state=5,
                n_jobs = N_JOBS,
                max_model_depth = MAX_DEPTH,
@@ -50,7 +51,7 @@ class RFmodel():
     '''
     path: folder path for intermediate models
     n_trees_unit: number of trees in a unit random forest
-    max_new_forests: a list containing the max number of new forests to add after each split, e.g., [1,2,4,8, ...]
+    max_new_forests: a list containing the max number of new forests to add after each split, e.g., [1,2,4,8, ...]#unused
     num_class: total number of classes for the application (local training data may contain only a subset of classes)
     increase_thrd: when adding new forests at each new branch, we at unit-size forests one by one, until one of the following is met:
                     1. The relative performance improvement is less than increase_thrd

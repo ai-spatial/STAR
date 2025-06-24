@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from paras import *
+from config import *
 from helper import *
 from train_branch import *
 from partition_opt import *
@@ -73,10 +73,10 @@ def partition(model, X, y,
         print('error! branch_id: ' + branch_id)
         print('train_list size: %d' % (train_list[0].shape[0]))
 
-      '''
-      partition
-      key return: X0_train, y0_train, X0_val, y0_val, X1_train, y1_train, X1_val, y1_val
-      '''
+
+      #partition
+      #key return: X0_train, y0_train, X0_val, y0_val, X1_train, y1_train, X1_val, y1_val
+
       #get train val data for branch
       X_val = X[val_list]
       y_val = y[val_list]
@@ -96,8 +96,8 @@ def partition(model, X, y,
                                                              X_group[val_list])
                                                             #  X_loc[np.ix_(val_list[0], GRID_COLS)])#X_val_grid
 
-      '''Verify if there are still data of interest left for selected class.
-      y_val_value should have shape (num_groups, n_class)'''
+      # TODO: Verify if there are still data of interest left for selected class.
+      #y_val_value should have shape (num_groups, n_class)
       # if np.sum(y_val_value) <= MIN_BRANCH_SAMPLE_SIZE:
       if (np.sum(y_val_value) <= MIN_BRANCH_SAMPLE_SIZE): #and i>=min_depth:
         print('selected classes: sample size too small! returning')
@@ -281,10 +281,10 @@ def partition(model, X, y,
 
         # print('X_branch_id 1 count: ', np.where(X_branch_id == '1'))
 
-        '''
-        update s table
-        need to make sure ids returned by groupby are consistent
-        '''
+
+        # update s table
+        # need to make sure ids returned by groupby are consistent
+
         #np.empty is not empty!
         # s0_grid_set = np.zeros(max_size_needed, dtype = np.int32)#, dtype = 'O'
         # s1_grid_set = np.zeros(max_size_needed, dtype = np.int32)
@@ -301,15 +301,17 @@ def partition(model, X, y,
           branch_table[next_level_row_ids_for_new_branches, i+1] = 1
 
         # vis_partition_training(grid, branch_id)
-        generate_vis_image(s_branch, X_branch_id, max_depth = max_depth, dir = model.path, step_size = STEP_SIZE, file_name = branch_id + '_split')
+        # !!!the generate_vis_image() and generate_vis_image_for_all_groups() in the following can be added back to motinor partitioning in the training process
+        #generate_vis_image(s_branch, X_branch_id, max_depth = max_depth, dir = model.path, step_size = STEP_SIZE, file_name = branch_id + '_split')
         #accuracy
         grid, vmin, vmax = generate_count_grid(true_pred_value/(y_val_value+0.0001), y_val_gid, class_id = 0, step_size = STEP_SIZE)
-        generate_vis_image_for_all_groups(grid, dir = model.path, ext = '_acc_' + branch_id, vmin = vmin, vmax = vmax)
+        #generate_vis_image_for_all_groups(grid, dir = model.path, ext = '_acc_' + branch_id, vmin = vmin, vmax = vmax)
+
         #gscore (used in scan statistics)
         # print('#Debug: true_pred_value.shape, y_val_gid.shape: ', true_pred_value.shape, y_val_gid.shape)
         scan_gscore = np.expand_dims(np.hstack([gscore[s0], gscore[s1]]), axis = -1)
         grid, vmin, vmax = generate_count_grid(scan_gscore, np.hstack([s0_group, s1_group]), class_id = 0, step_size = STEP_SIZE)
-        generate_vis_image_for_all_groups(grid, dir = model.path, ext = '_scan_' + branch_id, vmin = vmin, vmax = vmax)
+        #generate_vis_image_for_all_groups(grid, dir = model.path, ext = '_scan_' + branch_id, vmin = vmin, vmax = vmax)
         #gscore rank: ranking of each group in scan
         gscore_argsort = np.argsort(gscore,0)[::-1]
         gscore_rank = np.arange(gscore.shape[0])
@@ -317,14 +319,14 @@ def partition(model, X, y,
         #gscore_rank = gscore.shape[0] - 1 - gscore_rank
         scan_gscore_rank = np.expand_dims(np.hstack([gscore_rank[s0], gscore_rank[s1]]), axis = -1)
         grid, vmin, vmax = generate_count_grid(scan_gscore_rank, np.hstack([s0_group, s1_group]), class_id = 0, step_size = STEP_SIZE)
-        generate_vis_image_for_all_groups(grid, dir = model.path, ext = '_rank_' + branch_id, vmin = vmin, vmax = vmax)
+        #generate_vis_image_for_all_groups(grid, dir = model.path, ext = '_rank_' + branch_id, vmin = vmin, vmax = vmax)
         #gscore>0
         scan_gscore_positive = (scan_gscore>0).astype(int)
         grid, vmin, vmax = generate_count_grid(scan_gscore_positive, np.hstack([s0_group, s1_group]), class_id = 0, step_size = STEP_SIZE)
-        generate_vis_image_for_all_groups(grid, dir = model.path, ext = '_binary_' + branch_id, vmin = vmin, vmax = vmax)
+        #generate_vis_image_for_all_groups(grid, dir = model.path, ext = '_binary_' + branch_id, vmin = vmin, vmax = vmax)
         #count
         grid, vmin, vmax = generate_count_grid((y_val_value > MIN_GROUP_POS_SAMPLE_SIZE_FLEX).astype(int), y_val_gid, class_id = 0, step_size = STEP_SIZE)
-        generate_vis_image_for_all_groups(grid, dir = model.path, ext = '_cnt_' + branch_id, vmin = vmin, vmax = vmax)
+        #generate_vis_image_for_all_groups(grid, dir = model.path, ext = '_cnt_' + branch_id, vmin = vmin, vmax = vmax)
 
       else:
         print("= Branch %s not split" % (branch_id) )

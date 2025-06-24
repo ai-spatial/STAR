@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import os
 
-from paras import *
+from config import *
 
 def data_partition(X_in, X_mask):
   '''
@@ -219,9 +219,9 @@ def branch_id_to_loop_id(branch_id):
 
   return loop_id
 
-def init_s_branch(n_groups):
+def init_s_branch(n_groups, max_depth = MAX_DEPTH):
   #potential increase in number of grid cells due to imbalance partition (e.g., 0.25 + 0.75)
-  max_diviation_rate = (((0.5 + FLEX_RATIO)**2)*4)**np.floor((MAX_DEPTH-1)/2)
+  max_diviation_rate = (((0.5 + FLEX_RATIO)**2)*4)**np.floor((max_depth-1)/2)
   max_size_needed = np.ceil(n_groups*max_diviation_rate).astype(int)
 
   # s_branch = pd.DataFrame(np.zeros(max_size_needed))
@@ -257,7 +257,7 @@ def assign_branch_id(X_loc, s_branch, X_dim = X_DIM, max_depth = MAX_DEPTH, step
 
   test_data_grid = test_data_partition(s_branch, max_depth = max_depth)
 
-  step_size = step_size / (2**np.floor((MAX_DEPTH-1)/2))
+  step_size = step_size / (2**np.floor((max_depth-1)/2))
   X_loc_grid = np.floor(X_loc[:, 0:2]/step_size).astype(int)
 
   X_branch_id = test_data_grid[X_loc_grid[:,0], X_loc_grid[:,1]]
@@ -333,3 +333,33 @@ def open_dir(model_dir = 'result'):
     print('Error: Directory', dir_ckpt, 'does not exist.')
 
   return dir, dir_ckpt
+
+
+def get_spatial_range(X_loc):
+  xmin = np.min(X_loc[:,0])
+  xmax = np.max(X_loc[:,0])
+  ymin = np.min(X_loc[:,1])
+  ymax = np.max(X_loc[:,1])
+  return xmin, xmax, ymin, ymax
+
+def get_filter_thrd(grid_count, ratio = 0.2):
+  '''
+  Filter is needed to enhance the visualization. Otherwise, cells with small
+  number of samples (sensitive to small increase/decrease of correct predictions)
+  will show up and add noises to the map visualization.
+  '''
+  cnt_list = grid_count.reshape(-1)
+  cnt_list = np.nan_to_num(cnt_list)
+  cnt_list = np.sort(cnt_list, axis=None)
+  cnt_list_sum = np.sum(cnt_list)
+
+  cnt_cumu = 0
+  cnt_thrd = 0
+  for i in range(cnt_list.shape[0]):
+    cnt_cumu += cnt_list[i]
+    if cnt_cumu >= cnt_list_sum * ratio:
+      cnt_thrd = cnt_list[i]
+      break
+    cnt_thrd = cnt_list[i]
+
+  return cnt_thrd

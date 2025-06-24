@@ -9,7 +9,7 @@ import numpy as np
 # import tensorflow as tf
 import pandas as pd
 
-from paras import *
+from config import *
 
 #visualization
 import matplotlib.pyplot as plt

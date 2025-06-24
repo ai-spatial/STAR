@@ -9,7 +9,7 @@ import numpy as np
 import sklearn
 from sklearn.metrics import accuracy_score
 # import tensorflow as tf
-from paras import *
+from config import *
 
 def get_prf(true_class, total_class, pred_class, nan_option = 'mean', nan_value = -1):
   '''

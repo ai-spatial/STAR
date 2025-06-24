@@ -6,10 +6,70 @@
 # @License: MIT License
 
 import numpy as np
-from paras import STEP_SIZE#this is the grid cell size (not step size for image patch generation for semantic segmentation)
+from config import STEP_SIZE#this is the grid cell size (not step size for image patch generation for semantic segmentation)
 
-'''This function can be customized for different types of spatial or non-spatial data.
-It only needs data to be pre-processed into groups.'''
+#This function can be customized for different types of spatial or non-spatial data.
+#It only needs data to be pre-processed into groups.
+
+class GroupGenerator():
+  '''
+  Generate groups (minimum spatial units) for partitioning in GeoRF.
+  This generator is an example for grid-based group definitions,
+  where a grid is overlaid on the study area and each grid cell defines one group.
+  In general, any group definition can be used.
+
+  The groups are groupings of locations, which serve two important purposes:
+  (1) Minimum spatial unit: A group is the minimum spatial unit for space-partitioning
+  (or just data partitioning if non-spatial data). For example, a grid/fishnet can be used
+  to generate groups,	where all data points in each grid cell belong to one group. As a
+  minimum spatial unit,	all points in the same group will always be placed in the same
+  spatial partition.
+  (2) Test point model selection: Once Geo-RF is trained, the groups are used to determine
+  which local model a test point should use. First, the group ID of a test point is determined
+  by its location (e.g., based on grid cells), and then the corresponding partition ID of the
+  group is used to determine the local RF to use for the prediction (all groups in a spatial
+  partition share the same local model.).
+  '''
+  def __init__(self, xmin, xmax, ymin, ymax, step_size):
+    self.xmin = xmin
+    self.xmax = xmax
+    self.ymin = ymin
+    self.ymax = ymax
+    self.step_size = step_size
+
+  def get_groups(self, X_loc):
+    '''
+    Generate groups using locations of data points, and assign a group ID to each data point.
+
+    Parameters
+    ---------
+    X_loc : array-like
+        Same number of points as input features X. Stores the geographic coordinates (e.g., lat, lon) of each data point.
+    Return
+    -------
+    X_group : array-like
+        Provides a group ID assignment to each of the data point.
+    '''
+
+    X_loc[:,0] = X_loc[:,0] - self.xmin
+    X_loc[:,1] = X_loc[:,1] - self.ymin
+
+    #for debugging:
+    # print('Old xmin, xmax:', self.xmin, self.xmax)
+    # print('New xmin, xmax:', np.min(X_loc[:,0]), np.max(X_loc[:,0]))
+    #
+    # print('Old ymin, ymax:', self.ymin, self.ymax)
+    # print('New ymin, ymax:', np.min(X_loc[:,1]), np.max(X_loc[:,1]))
+
+    X_loc_grid = np.floor(X_loc/self.step_size)
+    n_rows = np.max(X_loc_grid[:,0])+1
+    n_cols = np.max(X_loc_grid[:,1])+1
+    # print(n_rows, n_cols)
+    X_group = X_loc_grid[:,0]*n_cols + X_loc_grid[:,1]
+
+    return X_group
+
+
 
 def generate_groups(X_loc):
   '''Create groups of data points.

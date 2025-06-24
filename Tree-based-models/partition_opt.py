@@ -21,7 +21,7 @@ from customize import generate_groups_loc
 from visualization import *
 from helper import *
 
-from paras import *
+from config import *
 
 def groupby_sum(y, y_group, onehot = ONEHOT):
   y = y.astype(int)
@@ -79,7 +79,7 @@ def get_class_wise_stat(y_true, y_pred, y_group, mode = MODE, onehot = ONEHOT):
     if SELECT_CLASS is not None:
       y_true = y_true[:, SELECT_CLASS]
 
-    '''Check what happens if y_true is all zeros (already entered the optimization phase)'''
+    # TODO: Check what happens if y_true is all zeros (already entered the optimization phase)
 
     true_pred_w_class = y_true * np.expand_dims(stat, 1)
 
@@ -179,6 +179,8 @@ def get_grid_id_for_largest_component(grid, components, sizes):
   grid_id = grid_ids[0]
 
   if grid_id == 0:
+    # if sizes.shape[0] == 1:
+    #   return -1
     largest_component = np.argsort(sizes)[-2]#np.max(sizes, axis=0)
     grid_ids = grid[components == largest_component]
     grid_id = grid_ids[0]
@@ -222,6 +224,9 @@ def swap_small_components(s_grid, min_component_size):
     print('num_labels: ', num_labels)
     print('sizes:')
     print(sizes)
+
+  if num_labels==0:
+    return s_grid#TODO: check this!!!
 
   largest_id = get_grid_id_for_largest_component(s_grid, components, sizes)
   print('largest_id:', largest_id)
@@ -338,6 +343,7 @@ def get_refined_partitions(s0, s1, y_val_gid, g_loc, dir = None, branch_id = Non
 
   # print(loc_grid)
 
+  #the generate_vis_image_for_all_groups() in the following 2 if conditions can be added back to compare results
   if dir is not None and branch_id is not None:
     generate_vis_image_for_all_groups(loc_grid, dir = dir, ext = '_debug1_' + branch_id, vmin = -1, vmax = 1)
 
@@ -421,8 +427,7 @@ def get_score(y_true, y_pred, mode = MODE):
         # score_select[y_true.numpy()[:,class_id]==1] = 1
         score_select[y_true[:,class_id]==1] = 1
       score = score[score_select.astype(bool)]
-      '''Check what if score is empty?
-      '''
+      # TODO: Check what if score is empty?
 
   else:
     #GeoRF code is not tested for regression yet
@@ -512,14 +517,14 @@ def scan(y_true_value, true_pred_value, min_sample,
     return s0, s1
 
 
-def get_refined_partitions_all(X_branch_id, s_branch, X_group, dir = None, min_component_size = 10):
+def get_refined_partitions_all(X_branch_id, s_branch, X_group, dir = None, min_component_size = 10, max_depth = MAX_DEPTH):
   '''This is used to refine partitions with all partition ids (not for smoothing binary partitions during the training process).'''
 
   unique_branch = np.unique(X_branch_id[X_branch_id != ''])
   branch_id_len = np.array(list(map(lambda x: len(x), unique_branch)))
   unique_branch = unique_branch[np.argsort(branch_id_len).astype(int)]
   #here grid has null/empty value of 0 (in partition_opt null is -1)
-  grid, id_map = vis_partition_group(s_branch, unique_branch, step_size=STEP_SIZE, max_depth = MAX_DEPTH, return_id_map = True)
+  grid, id_map = vis_partition_group(s_branch, unique_branch, step_size=STEP_SIZE, max_depth = max_depth, return_id_map = True)
   id_map[0] = ''#unique branch no longer contains ''
   print('id_map', id_map)
   # print('grid min: ', np.min(grid))

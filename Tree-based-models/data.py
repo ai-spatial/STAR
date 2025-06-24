@@ -11,7 +11,7 @@ import pandas as pd
 
 # from data_syn_exp import get_swap_group_list
 
-from paras import *
+from config import *
 
 def load_data():
     # real data
@@ -72,6 +72,31 @@ def img_to_patch(X, y, size = 128, step_size = 64, return_loc = False):
   else:
     return X_new, y_new
 
+
+def load_demo_data(full = False, crop_type = 'corn', onehot = ONEHOT):
+  '''
+  Load demo dataset for CONUS crop classification.
+  Data points: This is a subset of all data points (10% random samples) for the full dataset to reduce the size.
+  Features: For X, the full data has 333 features per data point, including 10 band values over 33 time steps + 3 topographical features.
+      The demo data has 13 features (10 band values from August + 3 topographical features).
+  Labels: Same set of 10% randomly sampled data points. Label is for corn vs. non-corn.
+  '''
+  CROP_CHOICE = crop_type#used earlier
+  #soybean, corn, wheat, cotton
+
+  if full:
+    X = np.load('X_full.npy')#full data is very large in size
+    y = np.load('y_' + CROP_CHOICE + '.npy')
+    X_loc = np.load('X_loc.npy')
+  else:
+    X = np.load('X_demo.npy')
+    y = np.load('y_' + CROP_CHOICE + '_demo.npy')
+    X_loc = np.load('X_loc_demo.npy')
+    
+  if onehot:
+    y = y_to_onehot(y)
+
+  return X, y, X_loc
 
 def load_data_us_cdl(full = False, from_raw = True, crop_type = 'corn', onehot = ONEHOT):
   # file_name = '/content/drive/MyDrive/CDLTrain2021/all.tiles.replaced.csv'
