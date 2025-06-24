@@ -33,10 +33,12 @@ Define groups of data points (minimum spatial units in partitioning):
 group_gen = GroupGenerator(xmin, xmax, ymin, ymax, cell_size)#example using grid cells to define groups
 X_group = group_gen.get_groups(X_loc)#convert locations to group IDs
 ```
+![Group generation](demo_img/group_generation.png)
 Train GeoRF:
 ```
 georf.fit(X, y, X_group)#locations grouped in X_group
 ```
+![Training](demo_img/GeoRF_overall.png)
 Make predictions:
 ```
 georf.predict(X_test, X_test_group)
