@@ -22,6 +22,8 @@ The deep learning version is at: [Deep-learning-models](/Deep-learning-models): 
 - Locations X_loc ([X_loc_demo.npy](https://drive.google.com/file/d/1etm32pt1dbvdFaLF9pFZesak12AE-4X2/view?usp=drive_link))
 
 ## Example usage:
+For details, please refer to [GeoRF_main.py](GeoRF_main.py)
+
 Create new GeoRF model.
 ```
 georf = GeoRF()#with optional parameters
