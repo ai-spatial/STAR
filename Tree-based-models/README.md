@@ -16,6 +16,11 @@ The deep learning version is at: [Deep-learning-models](/Deep-learning-models): 
 - As a spatially-explicit model (geo-aware version of RF), GeoRF requires an additional input X_loc that stores locations of data points in (X,y).
 - GeoRF needs a group assignment (minimum spatial units) as demonstrated in the code and visualizations in the paper. The group definitions can be customized in customize.py based on data, applications and tasks.
 
+## Sample demo data
+- Features X ([X_demo.npy](https://drive.google.com/file/d/1sLM2Los_OHiJho2byLBMYLqkW_LEFtA5/view?usp=drive_link))
+- Labels y ([y_demo.npy](https://drive.google.com/file/d/1CvX9n6mIM4jmFpSbfagjCvFhx3eok-fT/view?usp=drive_link))
+- Locations X_loc ([X_loc_demo.npy](https://drive.google.com/file/d/1etm32pt1dbvdFaLF9pFZesak12AE-4X2/view?usp=drive_link))
+
 ## Example usage:
 Create new GeoRF model.
 ```
