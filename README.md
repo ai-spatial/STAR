@@ -4,7 +4,7 @@ Learning for data with heterogeneity (ICDM'21 Best Paper Award)
 This repository includes several versions of the framework for different types of machine learning models, organized by different folders:
 * [Deep-learning-models](Deep-learning-models): Fully-connected, convolutional, recurrent, ...
 * [Tree-based-models](Tree-based-models): Random forest
-* **Demo and model-specific ReadMe available in the two folders.**
+* **Model-specific Demo and ReadMe available in each folder.**
 
 ## Paper information
 
