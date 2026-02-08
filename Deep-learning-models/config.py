@@ -1,17 +1,8 @@
-# # @Author: xie
-# # @Email:  xie@umd.edu
-# # @Last modified by:   xie
-# # @Last modified time: 2025-06-20
-# # @License: MIT License
-#
-
-
-
 # @Author: xie
 # @Date:   2021-06-02
 # @Email:  xie@umd.edu
 # @Last modified by:   xie
-# @Last modified time: 2025-04-21
+# @Last modified time: 2026-02-07
 # @License: MIT License
 
 import numpy as np
@@ -24,8 +15,8 @@ import numpy as np
 MODEL_CHOICE = 'DNN'
 # Please refer to other code version in github for deep learning models
 #Task (only classification version for RF has been tested)
-# MODE = 'classification'#'regression'
-MODE = 'regression'
+MODE = 'classification'#'regression'
+# MODE = 'regression'
 
 #------------------GeoRF parameters------------------
 
@@ -40,7 +31,7 @@ N_JOBS = 32#parallel computing for RF
 #Detailed ***Optional*** specifications
 MIN_BRANCH_SAMPLE_SIZE = 10#minimum number of samples needed to continue partitioning
 MIN_SCAN_CLASS_SAMPLE = 100#minimum number of samples needed for a class to be considered during partitioning optimization
-FLEX_RATIO = 0.025#affects max size difference between two partitions in each split
+FLEX_RATIO = 0.25#affects max size difference between two partitions in each split
 FLEX_OPTION = True
 # FLEX_TYPE = 'n_sample'
 FLEX_TYPE = 'n_group_w_sample'#careful with threshold
@@ -150,8 +141,8 @@ if MODE == 'regression':
 
 
 #Training related parameters - DL/default
-PRETRAIN_EPOCH = 60
-EPOCH_TRAIN = 60
+PRETRAIN_EPOCH = 20
+EPOCH_TRAIN = 20
 BATCH_SIZE = 256*256
 # Inference batch size to limit memory during predict()
 # PREDICT_BATCH_SIZE = 1024
