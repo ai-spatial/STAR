@@ -1,15 +1,19 @@
 # Spatial Transformation Framework for Deep Learning (GeoDL)
 
+Best Paper Award in IEEE ICDM 2021.
+
 The tree-based version is at: [Tree-based-models](/Tree-based-models)
 
 ## Major updates
 - Added a new class `GeoDL` in `GeoDL.py` with standard functions: `fit`, `predict`, and `evaluate`.
-- Added a simplified demo script `STAR_main.py` to show end-to-end usage.
-- Standardized configuration in `config.py` (with a compatibility shim `paras.py`).
-
-## Key differences from standard deep learning
+- Added a simplified demo script `GeoDL_main.py` to show end-to-end usage.
+- Refactored many other code files to fit into GeoDL.
+  
+## Key input differences from regular deep learning
 - GeoDL requires an additional input `X_group` that assigns each sample to a spatial group.
 - Groups are the minimum spatial units for partitioning. You can define them using raw coordinates or grid-based locations.
+- The model auto-partitions the space if it recognizes differences in optimal functional relationships between X and y in different regions.
+
 
 ## Sample demo data
 - Features X ([X_demo.npy](https://drive.google.com/file/d/1sLM2Los_OHiJho2byLBMYLqkW_LEFtA5/view?usp=drive_link))
