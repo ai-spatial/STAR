@@ -12,44 +12,33 @@ The tree-based version is at: [Tree-based-models](/Tree-based-models)
 - Groups are the minimum spatial units for partitioning. You can define them using raw coordinates or grid-based locations.
 
 ## Sample demo data
-- Features X ([X_example.npy](https://drive.google.com/file/d/1-DbkQusMbpcS72NYuKe3kWN_tPNonQD3/view?usp=sharing))
-- Labels y ([y_example.npy](https://drive.google.com/file/d/1-H7ZE8OoqJfhXSCCccFtpZp7vSZXypLC/view?usp=share_link))
+- Features X ([X_demo.npy](https://drive.google.com/file/d/1sLM2Los_OHiJho2byLBMYLqkW_LEFtA5/view?usp=drive_link))
+- Labels y ([y_demo.npy](https://drive.google.com/file/d/1CvX9n6mIM4jmFpSbfagjCvFhx3eok-fT/view?usp=drive_link))
+- Locations X_loc ([X_loc_demo.npy](https://drive.google.com/file/d/1etm32pt1dbvdFaLF9pFZesak12AE-4X2/view?usp=drive_link))
 
 ## Example usage
-For details, see `STAR_main.py`.
+For details, please refer to [GeoDL_main.py](GeoDL_main.py).
 
 Create a new model:
 ```
-from GeoDL import GeoDL
-geodl = GeoDL(model_choice="DNN")  # or "UNet"
+geodl = GeoDL(model_choice="DNN")#Vanilla network as an example
 ```
-
-Load demo data:
+Define groups of data points (minimum spatial units in partitioning):
 ```
-from data import load_demo_data
-X, y = load_demo_data()
+group_gen = GroupGenerator(xmin, xmax, ymin, ymax, cell_size)#example using grid cells to define groups
+X_group = group_gen.get_groups(X_loc)#convert locations to group IDs
 ```
-
-Define groups and split:
+![Group generation](demo_img/group_generation.png)
+Train GeoDL (i.e., STAR or geo-aware deep learning):
 ```
-from initialization import init_X_info
-X_group, X_set, _, _ = init_X_info(X, y)
+georf.fit(X, y, X_group)#locations grouped in X_group
 ```
-
-If you have raw locations, you can also generate groups explicitly:
+![Training](demo_img/GeoRF_overall.png)
+Make predictions:
 ```
-from customize import GroupGenerator
-group_gen = GroupGenerator(xmin, xmax, ymin, ymax, step_size)
-X_group = group_gen.get_groups(X_loc)
+geodl.predict(X_test, X_test_group)
 ```
-
-Train and evaluate:
+Evaluate model:
 ```
-geodl.fit(X, y, X_group, X_set=X_set)
-test_list = (X_set == 2)
-pre, rec, f1 = geodl.evaluate(X[test_list], y[test_list], X_group[test_list])
+geodl.evaluate(X_test, y_test, X_test_group)#X_test_group is generated in the same way as training
 ```
-
-## Notes for segmentation (UNet)
-- Use `--use_segmentation` in `STAR_main.py` to load image patches.
-- Adjust `IMG_SIZE`, `PATCH_SIZE`, and `PATCH_STEP_SIZE` in `config.py` if needed.
