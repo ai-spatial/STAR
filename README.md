@@ -35,4 +35,5 @@ This repository includes several versions of the framework for different types o
 ```
 
 ## High-level illustration:
+
 <img src="Deep-learning-models/demo_img/GeoDL_overall.png" alt="Training" width="80%"/>
