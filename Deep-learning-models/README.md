@@ -33,7 +33,8 @@ Train GeoDL (i.e., STAR or geo-aware deep learning):
 ```
 georf.fit(X, y, X_group)#locations grouped in X_group
 ```
-<img src="demo_img/GeoDL_overall.png" alt="Training" width="80%">
+<img src="demo_img/GeoDL_overall.png" alt="Training" width="80%"/>
+
 Make predictions:
 ```
 geodl.predict(X_test, X_test_group)
