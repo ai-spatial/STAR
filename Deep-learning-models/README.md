@@ -1,6 +1,6 @@
 # Spatial Transformation Framework for Deep Learning (GeoDL)
 
-Best Paper Award in IEEE ICDM 2021.
+Best Paper Award in IEEE ICDM 2021. (More info: [STAR package](/))
 
 The tree-based version is at: [Tree-based-models](/Tree-based-models)
 
