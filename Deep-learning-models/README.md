@@ -35,7 +35,7 @@ X_group = group_gen.get_groups(X_loc)#convert locations to group IDs
 ![Group generation](demo_img/group_generation.png)
 Train GeoDL (i.e., STAR or geo-aware deep learning):
 ```
-georf.fit(X, y, X_group)#locations grouped in X_group
+geodl.fit(X, y, X_group)#locations grouped in X_group
 ```
 <img src="demo_img/GeoDL_overall.png" alt="Training" width="80%"/>
 
