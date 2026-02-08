@@ -4,6 +4,7 @@ Learning for data with heterogeneity (ICDM'21 Best Paper Award)
 This repository includes several versions of the framework for different types of machine learning models, organized by different folders:
 * [Deep-learning-models](Deep-learning-models): Fully-connected, convolutional, recurrent, ...
 * [Tree-based-models](Tree-based-models): Random forest
+* Demo and model-specific ReadMe available in the two folders.
 
 ## Paper information
 
@@ -33,15 +34,5 @@ This repository includes several versions of the framework for different types o
 }
 ```
 
-## Example datasets
-Example dataset 1 (crop monitoring):
-* [X_example](https://drive.google.com/file/d/1-DbkQusMbpcS72NYuKe3kWN_tPNonQD3/view?usp=sharing): Features
-* [y_example](https://drive.google.com/file/d/1-H7ZE8OoqJfhXSCCccFtpZp7vSZXypLC/view?usp=share_link): Labels
-* Short description (more coming)
-    * X is a satellite imagery with 10 spectral bands, and y contains 23 raw crop classes (e.g., soybean)
-    * In this example spatial locations are represented by row and column IDs
-
-## A preliminary demo example
-[Running heterogeneity-aware learning on (X_example, y_example)](https://github.com/ai-spatial/STAR/blob/main/STAR_example.ipynb)
-
-More documentation and examples for usage will be added soon.
+##High-level illustration:
+<img src="Deep-learning-models/demo_img/GeoDL_overall.png" alt="Training" width="80%"/>
