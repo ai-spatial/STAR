@@ -7,7 +7,7 @@
 
 import numpy as np
 import tensorflow as tf
-from paras import *
+from config import *
 
 def get_prf(true_class, total_class, pred_class, nan_option = 'mean', nan_value = -1):
   '''
@@ -53,9 +53,10 @@ def get_overall_accuracy(y_true, y_pred):
 
 def get_class_wise_accuracy(y_true, y_pred, prf = False):
 
-  if len(y_true.shape) == 1:
-    y_true = tf.one_hot(y_true, NUM_CLASS)
-    y_pred = tf.one_hot(y_pred, NUM_CLASS)
+  # this was for RF version (RF version is now in a separate repo with no tf content)
+  # if len(y_true.shape) == 1:
+  #   y_true = tf.one_hot(y_true, NUM_CLASS)
+  #   y_pred = tf.one_hot(y_pred, NUM_CLASS)
 
   #reshape image or time-series labels
   if len(y_true.shape)>=3:

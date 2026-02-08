@@ -11,6 +11,7 @@ import numpy as np
 import tensorflow as tf
 import pandas as pd
 from scipy import stats
+from scipy import ndimage
 
 # from partition_opt import swap_partition_general
 from customize import generate_groups_loc
@@ -18,17 +19,56 @@ from customize import generate_groups_loc
 from visualization import *
 from helper import *
 
-from paras import *
+from config import *
+
+# def groupby_sum(y, y_group, onehot = ONEHOT):
+#   y = y.astype(int)
+#   y_group = y_group.reshape([-1,1])
+#   y = np.hstack([y_group, y])
+
+#   y = pd.DataFrame(y)
+#   y = y.groupby([0]).sum()
+
+#   return y.index.to_numpy(), y.to_numpy()
 
 def groupby_sum(y, y_group, onehot = ONEHOT):
-  y = y.astype(int)
-  y_group = y_group.reshape([-1,1])
-  y = np.hstack([y_group, y])
+    """
+    Group-wise sum over y.
 
-  y = pd.DataFrame(y)
-  y = y.groupby([0]).sum()
+    Parameters
+    ----------
+    y : np.ndarray
+        Shape (N,) for regression / soft labels
+        or (N, C) for multi-class / soft predictions
+    y_group : np.ndarray
+        Shape (N,), group identifiers (expected integer-valued)
 
-  return y.index.to_numpy(), y.to_numpy()
+    Returns
+    -------
+    group_ids : np.ndarray (int)
+        Unique group ids
+    summed_y : np.ndarray
+        Group-wise summed values of y
+    """
+
+    y = np.asarray(y)
+    y_group = np.asarray(y_group)
+
+    # Handle 1D y (regression / scalar prediction)
+    if y.ndim == 1:
+        df = pd.DataFrame({"group": y_group, "y": y})
+    else:
+        df = pd.DataFrame(y)
+        df.insert(0, "group", y_group)
+
+    out = df.groupby("group").sum()
+
+    # Ensure group ids are integers in the output
+    group_ids = out.index.to_numpy().astype(int)
+    summed_y = out.to_numpy()
+
+    return group_ids, summed_y
+
 
 def get_class_wise_stat(y_true, y_pred, y_group, mode = MODE, onehot = ONEHOT):
 
@@ -81,7 +121,7 @@ def get_class_wise_stat(y_true, y_pred, y_group, mode = MODE, onehot = ONEHOT):
 
     return y_true_group, y_true_value, true_pred_group, true_pred_value
 
-  else:
+  elif MODE == 'regression':
     # #reshape image or time-series labels
     # if len(y_true.shape)>=3:
     #   y_true = tf.reshape(y_true, [-1,NUM_CLASS])#tf.reshape takes numpy arrays
@@ -89,10 +129,22 @@ def get_class_wise_stat(y_true, y_pred, y_group, mode = MODE, onehot = ONEHOT):
 
     #may (or may not) need to revise for regression using scan methods!!!
     stat = tf.keras.losses.MSE(y_true, y_pred)
-    stat = stat.numpy()
-    stat_id, stat_value = groupby_sum(stat, y_group)
+    
+    stat = np.sqrt(stat.numpy())#equivalent
+    stat_id, stat_value = groupby_sum(stat, y_group)#output of stat_value should be one-dimensional
+    count_id, count_value = groupby_sum(np.ones(stat.shape[0]), y_group)
+    
+    # print('stat_value.shape:', stat_value.shape)
+    # print('stat_value:', stat_value)
 
-    return stat_id, stat_value
+    # assert len(stat_value.shape) == 1
+
+    return stat_id, stat_value, count_id, count_value
+    
+    # stat = stat.numpy()
+    # stat_id, stat_value = groupby_sum(stat, y_group)
+
+    # return stat_id, stat_value
 
 def get_c_b(y_true_value, true_pred_value):
   '''This calculates the total C and B.
@@ -155,6 +207,89 @@ def optimize_size(g, set_size, flex_ratio, flex_type = FLEX_TYPE, cnt = None):
       break
 
   return optimal_size
+
+
+def get_grid_id_for_largest_component(grid, components, sizes):
+  #non-zero component
+  largest_component = np.argsort(sizes)[-1]
+
+  #get_grid_id_from_components_id
+  grid_ids = grid[components == largest_component]
+  grid_id = grid_ids[0]
+
+  if grid_id == 0:
+    largest_component = np.argsort(sizes)[-2]
+    grid_ids = grid[components == largest_component]
+    grid_id = grid_ids[0]
+
+  return grid_id
+
+def label_multi(grid, connectivity=1, return_num=True):
+  cid = 0
+  values = np.unique(grid)
+  label = np.zeros(grid.shape)
+  grid_mask = grid>0
+
+  for value in values:
+    if value == 0:
+      continue
+    label_value, num_labels = ndimage.label(grid==value)
+    label_value += cid * (label_value>0)
+    label_value = label_value * grid_mask
+    label += label_value
+    cid += num_labels
+
+  return label, cid
+
+
+def swap_small_components(s_grid, min_component_size):
+
+  s_grid_mask = (s_grid>0)
+  components, num_labels = label_multi(s_grid)
+
+  sizes = ndimage.sum(s_grid_mask, components, range(num_labels + 1))
+  swap_labels = np.where(sizes <= min_component_size)[0]
+
+  with np.printoptions(threshold=np.inf):
+    print('swap_small_components:')
+    print('grid:')
+    print(s_grid)
+    print('components:')
+    print(components)
+    print('sizes:')
+    print(sizes)
+    print('swap_labels:', swap_labels)
+
+  for swap_label in swap_labels:
+    if swap_label == 0:
+      continue
+
+    component_mask = (components == swap_label)
+    if np.sum(component_mask) == 0:
+      continue
+
+    #get neighbors
+    component_ids = np.argwhere(component_mask)
+    #8-neighbor
+    i_max, j_max = s_grid.shape
+    for loc in component_ids:
+      loc_i = loc[0]
+      loc_j = loc[1]
+
+      #8-neighbor
+      loc_i_min = max(0, loc_i - 1)
+      loc_i_max = min(i_max, loc_i + 2)
+      loc_j_min = max(0, loc_j - 1)
+      loc_j_max = min(j_max, loc_j + 2)
+
+      local_grid = s_grid[loc_i_min:loc_i_max, loc_j_min:loc_j_max]
+      local_grid = local_grid[local_grid != 0].reshape(-1)
+      if local_grid.shape[0] == 0:
+        continue
+      majority = np.bincount(local_grid.astype(int)).argmax()
+      s_grid[loc_i, loc_j] = majority
+
+  return s_grid
 
 ##customized functions: if this is applied to spatial data and the user desires a more contiguous partitioning
 # def get_connected_top_cells(g, g_group,
@@ -356,8 +491,8 @@ def get_score(y_true, y_pred, mode = MODE):
       '''Check what if score is empty?
       '''
 
-  else:
-    score = tf.keras.losses.MSE(y_true, y_pred, reduction=tf.keras.losses.Reduction.NONE)#reduction=tf.keras.losses.Reduction.NONE
+  elif mode == 'regression':
+    score = tf.keras.losses.MSE(y_true, y_pred)#reduction=tf.keras.losses.Reduction.NONE
     score = - score.numpy()
 
   return score
@@ -438,27 +573,75 @@ def scan(y_true_value, true_pred_value, min_sample,
     return s0, s1
 
 
-def get_refined_partitions_all(X_branch_id, s_branch, X_group, dir = None):
+'''Partitioning optimization for regression.'''
+#simplified version
+def scan_regression(loss_value, min_sample,
+         flex = FLEX_OPTION,
+         flex_type = FLEX_TYPE,
+         return_score = False):#connected = True, g_grid = None, X_dim = None, step_size = None,
+
+  '''flex_type: determines if the split balance is based on #groups or #samples in groups'''
+  g = loss_value
+
+  sorted_g = np.argsort(g,0)#second input might not be needed
+  sorted_g = sorted_g[::-1]
+  set_size = np.ceil(sorted_g.shape[0]/2).astype(int)
+
+  sorted_g_value = np.sort(g)#second input might not be needed
+  sorted_g_vaule = sorted_g_value[::-1]
+
+  if flex:
+    flex_ratio = FLEX_RATIO
+    min_size = (np.ceil(set_size * (1 - flex_ratio))).astype(int)
+    max_size = (np.ceil(set_size * (1 + flex_ratio))).astype(int)
+
+    #data for this step will be processed/grided and small; if needed, implement incremental updates
+    optimal_size = set_size
+    min_variance = np.var(sorted_g_value[0:set_size]) + np.var(sorted_g_value[set_size:])
+    for size in range(min_size, max_size):
+      variance = np.var(sorted_g_value[0:size]) + np.var(sorted_g_value[size:])
+      if variance < min_variance:
+        optimal_size = size
+        min_variance = variance
+
+    set_size = optimal_size
+
+  s0 = sorted_g[0:set_size].astype(int)
+  s1 = sorted_g[set_size:].astype(int)
+
+  s0 = s0.reshape(-1)
+  s1 = s1.reshape(-1)
+    # print('s0', s0)
+    # print('s1', s1)
+
+  if return_score:
+    return s0, s1, g
+    # return s0, s1, g[s0], g[s1]
+  else:
+    return s0, s1
+
+
+def get_refined_partitions_all(X_branch_id, s_branch, X_group, dir = None, min_component_size = 10, max_depth = MAX_DEPTH):
   '''This is used to refine partitions with all partition ids (not for smoothing binary partitions during the training process).'''
 
   unique_branch = np.unique(X_branch_id[X_branch_id != ''])
   branch_id_len = np.array(list(map(lambda x: len(x), unique_branch)))
   unique_branch = unique_branch[np.argsort(branch_id_len).astype(int)]
   #here grid has null/empty value of 0 (in partition_opt null is -1)
-  grid, id_map = vis_partition_group(s_branch, unique_branch, step_size=STEP_SIZE, max_depth = MAX_DEPTH, return_id_map = True)
+  grid, id_map = vis_partition_group(s_branch, unique_branch, step_size=STEP_SIZE, max_depth = max_depth, return_id_map = True)
   id_map[0] = ''#unique branch no longer contains ''
   print('id_map', id_map)
-  print('grid min: ', np.min(grid))
-  print('grid.shape', grid.shape)
-
   generate_vis_image_from_grid(grid, dir, file_name = 'all_refined_before')
 
+  if dir is not None:
+    np.save(dir + '/' + 'grid' + '_before' + '.npy', grid)
+
   locs = generate_groups_loc(X_DIM, STEP_SIZE)
-  for refine_i in range(REFINE_TIMES):
-    grid = swap_partition_general(grid, locs, null_value = 0)
+  grid = swap_small_components(grid, min_component_size)
 
   if dir is not None:
     generate_vis_image_from_grid(grid, dir, file_name = 'all_refined')
+    np.save(dir + '/' + 'grid' + '_after' + '.npy', grid)
 
   list_branch_id_int = grid.reshape(-1).astype(int)
   # list_group_id = np.arange(grid.shape[0] * grid.shape[1])

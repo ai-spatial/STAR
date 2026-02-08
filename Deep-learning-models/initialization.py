@@ -8,11 +8,11 @@ import numpy as np
 import tensorflow as tf
 import pandas as pd
 
-from paras import *
+from config import *
 # from customize import generate_groups, generate_groups_from_raw_loc#can customize group definition
 from customize import *#generate_groups
 
-#data preprocessing. Defined in paras.py
+#data preprocessing. Defined in config.py
 # TRAIN_RATIO = 0.25
 # VAL_RATIO = TRAIN_RATIO
 # TEST_RATIO = 1 - TRAIN_RATIO - VAL_RATIO
@@ -70,6 +70,38 @@ def train_val_test_split(X, y, train_ratio = TRAIN_RATIO):#X_loc,
     else:
       X_set[i] = 2
   return X_set
+
+
+def train_val_split(X, val_ratio = VAL_RATIO):
+  '''This assumes data contains only train and val'''
+  np.random.seed(0)
+  rand_split = np.random.rand(X.shape[0])
+  X_set = np.zeros(X.shape[0])
+  X_set[(rand_split<val_ratio)] = 1
+  return X_set
+
+
+def train_test_split_all(X, y, X_loc, X_group, test_ratio = TEST_RATIO, random_state = 0):
+  '''Same role as regular train-test split function but with more inputs: X_loc and X_group.'''
+  np.random.seed(random_state)
+  rand_split = np.random.rand(X.shape[0])
+  X_set = np.zeros(X.shape[0])
+  test_thrd = test_ratio
+  X_set[(rand_split<test_thrd)] = 2
+
+  Xtrain = X[X_set==0]
+  Xtest = X[X_set==2]
+
+  ytrain = y[X_set==0]
+  ytest = y[X_set==2]
+
+  Xtrain_loc = X_loc[X_set==0]
+  Xtest_loc = X_loc[X_set==2]
+
+  Xtrain_group = X_group[X_set==0]
+  Xtest_group = X_group[X_set==2]
+
+  return Xtrain, ytrain, Xtrain_loc, Xtrain_group, Xtest, ytest, Xtest_loc, Xtest_group
 
 
 def generate_X_loc_grid(X_dim, step_size):

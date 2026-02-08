@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 import pandas as pd
 
-from paras import *
+from config import *
 from helper import *
 from train_branch import *
 from partition_opt import *
@@ -34,7 +34,15 @@ def partition(model, X, y,
   #dict #rows must be consistent
   s_branch, max_size_needed = init_s_branch(n_groups = N_GROUPS)
 
+  #update
+  branch_size_valid = True
+
   for i in range(max_depth-1):
+
+    #update
+    if not branch_size_valid:
+      print("Branch size too small! Returning...")
+      continue
 
     num_branches = 2**i
     init_epoch_number = PRETRAIN_EPOCH + EPOCH_TRAIN * i
@@ -76,20 +84,27 @@ def partition(model, X, y,
       del X_val
 
       #get s list
-      #gid stores row and column ids for grid cells (here y_val_gid and true_pred_gid are the same set, order should be the same but double check if needed)
+      #outdated: gid stores row and column ids for grid cells (here y_val_gid and true_pred_gid are the same set, order should be the same but double check if needed)
+      #gid stores group ids for grid cells (here y_val_gid and true_pred_gid are the same set, order should be the same but double check if needed)
       #value stores cell-wise sum of per-class stats
       #need to make results returned by groupby have the same order
       #change stat: get stats function
 
-      (y_val_gid, y_val_value,
-       true_pred_gid, true_pred_value) = get_class_wise_stat(y_val, y_pred_before,
-                                                             X_group[val_list])
+      if MODE == 'classification':
+        (y_val_gid, y_val_value,
+         true_pred_gid, true_pred_value) = get_class_wise_stat(y_val, y_pred_before,
+                                                               X_group[val_list])
+        del y_val
+        #s0 and s1 returned by scan are at grid cell level
+        s0, s1 = scan(y_val_value, true_pred_value, MIN_SCAN_CLASS_SAMPLE)
+      elif MODE == 'regression':
+        (y_val_gid, stat_value, 
+        count_id, count_value) = get_class_wise_stat(y_val, y_pred_before,
+                                                               X_group[val_list])
+        del y_val
+        s0, s1 = scan_regression(stat_value/count_value, MIN_SCAN_CLASS_SAMPLE)
 
       # print('y_val_gid: ', y_val_gid)
-
-      del y_val
-      #s0 and s1 returned by scan are at grid cell level
-      s0, s1 = scan(y_val_value, true_pred_value, MIN_SCAN_CLASS_SAMPLE)
 
       s0_group = get_s_list_group_ids(s0, y_val_gid)
       s1_group = get_s_list_group_ids(s1, y_val_gid)
@@ -106,12 +121,15 @@ def partition(model, X, y,
       #   continue
 
       if check_split_validity(y0_train, MIN_BRANCH_SAMPLE_SIZE) == 0:
+        branch_size_valid = False
         print('sample size too small! returning')
         continue
       if check_split_validity(y1_train, MIN_BRANCH_SAMPLE_SIZE) == 0:
+        branch_size_valid = False
         print('sample size too small! returning')
         continue
 
+       
       #train and eval hypothetical branches (i.e., have optimized partitions but need to perform sig test)
       print("Training new branches...")
       y0_pred, y1_pred = train_and_eval_two_branch(model, X0_train, y0_train, X0_val,

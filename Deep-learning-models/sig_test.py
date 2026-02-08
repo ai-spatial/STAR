@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 import pandas as pd
 
-from paras import *
+from config import *
 from static_table import cvtable
 
 #significance testing functions

@@ -8,10 +8,10 @@ import numpy as np
 import tensorflow as tf
 import pandas as pd
 
-from paras import *
+from config import *
 
-def load_data(X_path = 'X_example.npy',
-              y_path = 'y_example.npy'):
+def load_data(X_path = DEMO_X_PATH,
+              y_path = DEMO_Y_PATH):
     # real data
     X = np.load(X_path)
     y = np.load(y_path).astype(int)
@@ -19,7 +19,6 @@ def load_data(X_path = 'X_example.npy',
         y = np.reshape(y,[-1])
         y = tf.one_hot(y, NUM_CLASS).numpy()
     else:
-        y = label_raw
         y = np.reshape(y,[-1])
 
     y = y.astype(int)
@@ -27,7 +26,7 @@ def load_data(X_path = 'X_example.npy',
 
     return X, y
 
-def img_to_patch(X, y, size = 128, step_size = 64, return_loc = False):
+def img_to_patch(X, y, size = PATCH_SIZE, step_size = PATCH_STEP_SIZE, return_loc = False):
   '''
   Args:
     size: image size
@@ -68,8 +67,8 @@ def img_to_patch(X, y, size = 128, step_size = 64, return_loc = False):
   else:
     return X_new, y_new
 
-def load_data_seg(X_path = 'X_example.npy',
-                  y_path = 'y_example.npy',
+def load_data_seg(X_path = DEMO_X_PATH,
+                  y_path = DEMO_Y_PATH,
                   return_loc = False):
     # real data
     X = np.load(X_path)
@@ -79,7 +78,6 @@ def load_data_seg(X_path = 'X_example.npy',
         # y = np.reshape(y,[-1])
         y = tf.one_hot(y, NUM_CLASS).numpy()
     else:
-        y = label_raw
         y = np.reshape(y,[-1])
 
     y = y.astype(np.int8)
@@ -91,6 +89,143 @@ def load_data_seg(X_path = 'X_example.npy',
       return X, y, X_loc
     else:
       return X,y
+
+# def load_demo_data(X_path = DEMO_X_PATH,
+#                    y_path = DEMO_Y_PATH,
+#                    X_loc_path = DEMO_X_LOC_PATH,
+#                    return_loc = False):
+#     """
+#     Lightweight demo loader to match tree-based usage.
+#     """
+#     X, y = load_data(X_path = X_path, y_path = y_path)
+#     if return_loc and X_loc_path:
+#         X_loc = np.load(X_loc_path)
+#         return X, y, X_loc
+#     return X, y
+
+def load_demo_data(X_path = DEMO_X_PATH,
+                    y_path = DEMO_Y_PATH,
+                    X_loc_path = DEMO_X_LOC_PATH,
+                    full = False,
+                    onehot = ONEHOT):
+  '''
+  Load demo dataset for CONUS crop classification.
+  Data points: This is a subset of all data points (10% random samples) for the full dataset to reduce the size.
+  Features: For X, the full data has 333 features per data point, including 10 band values over 33 time steps + 3 topographical features.
+      The demo data has 13 features (10 band values from August + 3 topographical features).
+  Labels: Same set of 10% randomly sampled data points. Label is binary.
+  '''
+  # CROP_CHOICE = crop_type#used earlier
+  #soybean, corn, wheat, cotton
+
+  if full:
+    X = np.load('X_full.npy')#full data is very large in size
+    y = np.load('y.npy')
+    X_loc = np.load('X_loc.npy')
+  else:
+    X = np.load(X_path)
+    y = np.load(y_path)
+    X_loc = np.load(X_loc_path)
+
+  if onehot and MODE == 'classification':
+    y = y_to_onehot(y)
+
+  return X, y, X_loc
+
+
+def load_demo_data_seg(X_path = DEMO_X_PATH,
+                       y_path = DEMO_Y_PATH,
+                       X_loc_path = DEMO_X_LOC_PATH,
+                       return_loc = False):
+    X, y, X_loc = load_data_seg(X_path = X_path, y_path = y_path, return_loc = True)
+    if return_loc and X_loc_path:
+        X_loc = np.load(X_loc_path)
+    if return_loc:
+        return X, y, X_loc
+    return X, y
+
+
+def load_data_us_cdl(full = False, from_raw = True, crop_type = 'corn', onehot = ONEHOT):
+  # file_name = '/content/drive/MyDrive/CDLTrain2021/all.tiles.replaced.csv'
+
+  CROP_CHOICE = crop_type#used earlier
+  #soybean, corn, wheat, cotton
+
+  if full:
+    X = np.load('X_full.npy')
+  else:
+    X = np.load('X.npy')
+
+  # y = np.load('y.npy')
+  y = np.load('y_' + CROP_CHOICE + '.npy')
+  X_loc = np.load('X_loc.npy')
+
+  if onehot:
+    y = y_to_onehot(y)
+
+  return X, y, X_loc
+
+def y_to_onehot(y):
+  y = np.reshape(y,[-1])
+  # y = tf.one_hot(y, NUM_CLASS).numpy()
+  y = np.eye(NUM_CLASS)[y].astype(int)
+  y = y.astype(int)
+  return y
+
+def merge_labels(y, y_map):
+  '''
+  Args:
+    y: labels of data samples
+    y_map: two columns are original label IDs and new label IDs
+  '''
+
+  y_new = np.copy(y)#make a copy (mutable objects)
+
+  for i in range(y_map.shape[0]):
+    y_new[y==y_map[i,0]] = y_map[i,1]
+
+  return y_new
+
+def project_X_loc(X_loc):
+  '''Make X_loc min values to 0.'''
+  xmin = np.min(X_loc[:,0])
+  xmax = np.max(X_loc[:,0])
+  ymin = np.min(X_loc[:,1])
+  ymax = np.max(X_loc[:,1])
+  print('before:')
+  print('xmin, xmax:', np.min(X_loc[:,0]), np.max(X_loc[:,0]))
+  print('ymin, xmax:', np.min(X_loc[:,1]), np.max(X_loc[:,1]))
+
+  X_loc[:,0] = X_loc[:,0] - xmin
+  X_loc[:,1] = X_loc[:,1] - ymin
+
+  xmin = np.min(X_loc[:,0])
+  xmax = np.max(X_loc[:,0])
+  ymin = np.min(X_loc[:,1])
+  ymax = np.max(X_loc[:,1])
+  print('after:')
+  print('xmin, xmax:', np.min(X_loc[:,0]), np.max(X_loc[:,0]))
+  print('ymin, xmax:', np.min(X_loc[:,1]), np.max(X_loc[:,1]))
+
+  return X_loc, xmin, xmax, ymin, ymax
+
+def rev_project_X_loc(X_loc, xmin, ymin):
+  '''Revert the projection.'''
+  X_loc[:,0] = X_loc[:,0] + xmin
+  X_loc[:,1] = X_loc[:,1] + ymin
+
+  xmin = np.min(X_loc[:,0])
+  xmax = np.max(X_loc[:,0])
+  ymin = np.min(X_loc[:,1])
+  ymax = np.max(X_loc[:,1])
+  print('xmin, xmax:', np.min(X_loc[:,0]), np.max(X_loc[:,0]))
+  print('ymin, xmax:', np.min(X_loc[:,1]), np.max(X_loc[:,1]))
+
+  return X_loc
+
+def reload_X_loc_raw():
+  X_loc = np.load('X_loc.npy')
+  return X_loc
 
 
 

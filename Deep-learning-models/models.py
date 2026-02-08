@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 import pandas as pd
 
-from paras import *
+from config import *
 from helper import get_X_branch_id_by_group
 from metrics import *
 
@@ -62,7 +62,7 @@ class DNNmodel():#tf.keras.Model
 
     initializer = tf.keras.initializers.TruncatedNormal(stddev=0.4)#mean=0.0, seed=None
 
-    inputs = tf.keras.Input(shape=(10,))
+    inputs = tf.keras.Input(shape=(INPUT_SIZE,))
     x = inputs
     for i in range(self.num_layers):
       x = tf.keras.layers.Dense(self.layer_size, activation=tf.nn.relu, kernel_initializer=initializer)(x)
@@ -122,7 +122,93 @@ class DNNmodel():#tf.keras.Model
     return
 
   def predict(self, X, prob = False):
+    #no change
     return self.model.predict(X)
+
+  def predict_test(self, X, y, X_group, s_branch, prf = True, X_branch_id = None, append_acc = False):
+    """
+    Branch-wise evaluation, mirroring RFmodel.predict_test().
+    """
+    '''Classification'''
+    true = 0
+    total = 0
+    true_class = np.zeros(self.num_class)
+    total_class = np.zeros(self.num_class)
+    total_pred =  np.zeros(self.num_class)
+    '''Regression'''
+    err_abs = 0
+    err_square = 0
+
+    if X_branch_id is None:
+      X_branch_id = get_X_branch_id_by_group(X_group, s_branch)
+
+    for branch_id in np.unique(X_branch_id):
+      id_list = np.where(X_branch_id == branch_id)
+      X_part = X[id_list]
+      y_part = y[id_list]
+
+      self.load(branch_id)
+      y_pred = self.predict(X_part)
+
+      if self.mode == 'classification':
+        true_part, total_part = get_overall_accuracy(y_part, y_pred)
+        true += true_part
+        total += total_part
+
+        true_class_part, total_class_part, total_pred_part = get_class_wise_accuracy(y_part, y_pred, prf = True)
+        true_class += true_class_part
+        total_class += total_class_part
+        total_pred += total_pred_part
+
+      if self.mode == 'regression':
+        y_part_flat = np.reshape(y_part, (-1,))
+        y_pred_flat = np.reshape(y_pred, (-1,))
+        err_abs_part = np.sum(np.abs(y_part_flat - y_pred_flat))
+        err_square_part = np.sum(np.square(y_part_flat - y_pred_flat))
+        err_abs += err_abs_part
+        err_square += err_square_part
+
+    
+    if self.mode == 'regression':
+      return err_abs / y.shape[0], err_square / y.shape[0]
+
+    if prf and self.mode == 'classification':
+      if append_acc:
+        prf_result = list(get_prf(true_class, total_class, total_pred))
+        prf_result.append(np.sum(true) / np.sum(total))
+        return tuple(prf_result)
+      return get_prf(true_class, total_class, total_pred)
+
+    return true / total
+
+  # def get_score(self, y_true, y_pred_prob):
+  #   if self.mode == 'classification':
+  #     y_pred = np.argmax(y_pred_prob, axis=1)
+  #     if len(y_true.shape) > 1:
+  #       y_true = np.argmax(y_true, axis=1)
+  #     return np.mean(y_pred == y_true)
+  #   return None
+
+  def predict_geodl(self, X, X_group, s_branch, X_branch_id = None):
+    """
+    Predict with branch-specific models, mirroring predict_georf().
+    """
+    if X_branch_id is None:
+      X_branch_id = get_X_branch_id_by_group(X_group, s_branch)
+
+    y_pred_full = None
+    for branch_id in np.unique(X_branch_id):
+      id_list = np.where(X_branch_id == branch_id)
+      X_part = X[id_list]
+
+      self.load(branch_id)
+      y_pred = self.predict(X_part)
+
+      if y_pred_full is None:
+        y_pred_full = np.zeros((X.shape[0],) + y_pred.shape[1:], dtype = y_pred.dtype)
+      y_pred_full[id_list] = y_pred
+
+    return y_pred_full
 
   #tensorflow.org/guide/keras/sequential_model
   def set_trainable_layers(self, partition_level):
@@ -144,7 +230,7 @@ class DNNmodel():#tf.keras.Model
   def save(self, branch_id):
     #save the current branch
     #branch_id should include the current branch (not after added to X_branch_id)
-    self.model.save_weights(self.ckpt_path + '/' + self.model_name + '_ckpt_' + branch_id)
+    self.model.save_weights(self.ckpt_path + '/' + self.model_name + '_ckpt_' + branch_id + '.weights.h5')
     # print(self.ckpt_path + 'ckpt_' + self.model_name + '_' + branch_id)
     return
 
@@ -153,7 +239,7 @@ class DNNmodel():#tf.keras.Model
     ckpt_path = self.ckpt_path
     if ckpt_path[-1] != '/':
       ckpt_path = ckpt_path + '/'
-    self.model.load_weights(ckpt_path + self.model_name + '_ckpt_' + branch_id)
+    self.model.load_weights(ckpt_path + self.model_name + '_ckpt_' + branch_id + '.weights.h5')
     # print(self.ckpt_path + 'ckpt_' + self.model_name + '_' + branch_id)
     return
 
@@ -288,7 +374,92 @@ class UNetmodel():#tf.keras.Model
     return
 
   def predict(self, X, prob = False):
+    #no change
     return self.model.predict(X)
+
+  def predict_test(self, X, y, X_group, s_branch, prf = True, X_branch_id = None, append_acc = False):
+    """
+    Branch-wise evaluation, mirroring RFmodel.predict_test().
+    """
+    '''Classification'''
+    true = 0
+    total = 0
+    true_class = np.zeros(self.num_class)
+    total_class = np.zeros(self.num_class)
+    total_pred =  np.zeros(self.num_class)
+    '''Regression'''
+    err_abs = 0
+    err_square = 0
+
+    if X_branch_id is None:
+      X_branch_id = get_X_branch_id_by_group(X_group, s_branch)
+
+    for branch_id in np.unique(X_branch_id):
+      id_list = np.where(X_branch_id == branch_id)
+      X_part = X[id_list]
+      y_part = y[id_list]
+
+      self.load(branch_id)
+      y_pred = self.predict(X_part)
+
+      if self.mode == 'classification':
+        true_part, total_part = get_overall_accuracy(y_part, y_pred)
+        true += true_part
+        total += total_part
+
+        true_class_part, total_class_part, total_pred_part = get_class_wise_accuracy(y_part, y_pred, prf = True)
+        true_class += true_class_part
+        total_class += total_class_part
+        total_pred += total_pred_part
+
+      elif self.mode == 'regression':
+        y_part_flat = np.reshape(y_part, (-1,))
+        y_pred_flat = np.reshape(y_pred, (-1,))
+        err_abs_part = np.sum(np.abs(y_part_flat - y_pred_flat))
+        err_square_part = np.sum(np.square(y_part_flat - y_pred_flat))
+        err_abs += err_abs_part
+        err_square += err_square_part
+
+    if prf and self.mode == 'classification':
+      if append_acc:
+        prf_result = list(get_prf(true_class, total_class, total_pred))
+        prf_result.append(np.sum(true) / np.sum(total))
+        return tuple(prf_result)
+      return get_prf(true_class, total_class, total_pred)
+
+    if self.mode == 'regression':
+      return err_abs / y.shape[0], err_square / y.shape[0]
+    
+    return true / total
+
+  # def get_score(self, y_true, y_pred_prob):
+  #   if self.mode == 'classification':
+  #     y_pred = np.argmax(y_pred_prob, axis=1)
+  #     if len(y_true.shape) > 1:
+  #       y_true = np.argmax(y_true, axis=1)
+  #     return np.mean(y_pred == y_true)
+  #   return None
+
+  def predict_geodl(self, X, X_group, s_branch, X_branch_id = None):
+    """
+    Predict with branch-specific models, mirroring predict_georf().
+    """
+    if X_branch_id is None:
+      X_branch_id = get_X_branch_id_by_group(X_group, s_branch)
+
+    y_pred_full = None
+    for branch_id in np.unique(X_branch_id):
+      id_list = np.where(X_branch_id == branch_id)
+      X_part = X[id_list]
+
+      self.load(branch_id)
+      y_pred = self.predict(X_part)
+
+      if y_pred_full is None:
+        y_pred_full = np.zeros((X.shape[0],) + y_pred.shape[1:], dtype = y_pred.dtype)
+      y_pred_full[id_list] = y_pred
+
+    return y_pred_full
 
   #tensorflow.org/guide/keras/sequential_model
   def set_trainable_layers(self, partition_level):
@@ -310,7 +481,7 @@ class UNetmodel():#tf.keras.Model
   def save(self, branch_id):
     #save the current branch
     #branch_id should include the current branch (not after added to X_branch_id)
-    self.model.save_weights(self.ckpt_path + '/' + self.model_name + '_ckpt_' + branch_id)
+    self.model.save_weights(self.ckpt_path + '/' + self.model_name + '_ckpt_' + branch_id + '.weights.h5')
     # print(self.ckpt_path + 'ckpt_' + self.model_name + '_' + branch_id)
     return
 
@@ -319,103 +490,116 @@ class UNetmodel():#tf.keras.Model
     ckpt_path = self.ckpt_path
     if ckpt_path[-1] != '/':
       ckpt_path = ckpt_path + '/'
-    self.model.load_weights(ckpt_path + self.model_name + '_ckpt_' + branch_id)
+    self.model.load_weights(ckpt_path + self.model_name + '_ckpt_' + branch_id + '.weights.h5')
     # print(self.ckpt_path + 'ckpt_' + self.model_name + '_' + branch_id)
     return
 
-'''General model functions.
-Used for convenience in model definition,
-or outside model training or data partitioning.'''
-def predict_test(model, X, y, X_group, s_branch, prf = True):
-  #prob here is aggregated probability (does not sum to 1 without normalizing)
-  '''
-  group_branch contains the branch_id for each group
-  '''
-  true = 0
-  total = 0
-  true_class = np.zeros(model.num_class)
-  total_class = np.zeros(model.num_class)
-  total_pred =  np.zeros(model.num_class)
+#removing redundancy in examples
+# '''General model functions.
+# Used for convenience in model definition,
+# or outside model training or data partitioning.
+# Includes branch-wise prediction helpers for STAR.'''
+# def predict_test(model, X, y, X_group, s_branch, prf = True):
+#   #prob here is aggregated probability (does not sum to 1 without normalizing)
+#   '''
+#   group_branch contains the branch_id for each group
+#   '''
+#   true = 0
+#   total = 0
+#   true_class = np.zeros(model.num_class)
+#   total_class = np.zeros(model.num_class)
+#   total_pred =  np.zeros(model.num_class)
 
-  X_branch_id = get_X_branch_id_by_group(X_group, s_branch)
-  for branch_id in np.unique(X_branch_id):
-    id_list = np.where(X_branch_id == branch_id)
-    X_part = X[id_list]
-    y_part = y[id_list]
+#   X_branch_id = get_X_branch_id_by_group(X_group, s_branch)
+#   for branch_id in np.unique(X_branch_id):
+#     id_list = np.where(X_branch_id == branch_id)
+#     X_part = X[id_list]
+#     y_part = y[id_list]
 
-    model.load(branch_id)
-    # y_pred = model.predict(X_part)
+#     model.load(branch_id)
+#     # y_pred = model.predict(X_part)
 
-    if model.mode == 'classification':
-      true_part, total_part, true_class_part, total_class_part, total_pred_part = predict_test_one_branch(model, X, y, as_sub_function = True)
-      #overall
-      # true_part, total_part = get_overall_accuracy(y_part, y_pred)
-      true += true_part
-      total += total_part
-      #class-wise, if needed
-      # true_class_part, total_class_part, total_pred_part = get_class_wise_accuracy(y_part, y_pred, prf = True)
-      true_class += true_class_part
-      total_class += total_class_part
-      total_pred += total_pred_part
+#     if model.mode == 'classification':
+#       true_part, total_part, true_class_part, total_class_part, total_pred_part = predict_test_one_branch(model, X, y, as_sub_function = True)
+#       #overall
+#       # true_part, total_part = get_overall_accuracy(y_part, y_pred)
+#       true += true_part
+#       total += total_part
+#       #class-wise, if needed
+#       # true_class_part, total_class_part, total_pred_part = get_class_wise_accuracy(y_part, y_pred, prf = True)
+#       true_class += true_class_part
+#       total_class += total_class_part
+#       total_pred += total_pred_part
 
-  if prf:
-    return get_prf(true_class, total_class, total_pred)#acc, acc_class
-  else:
-    return true / total
+#   if prf:
+#     return get_prf(true_class, total_class, total_pred)#acc, acc_class
+#   else:
+#     return true / total
 
-def predict_test_one_branch(model, X, y, prf = True, batch_size = 32, as_sub_function = False):
-  '''Used to perform testing using a single branch (e.g., base network with branch_id = '').
-  Args:
-    as_sub_function: if True, return intermediate results to use in other functions.
-  '''
-  # model.load('')#'' is the base branch
+# def predict_test_one_branch(model, X, y, prf = True, batch_size = 32, as_sub_function = False):
+#   '''Used to perform testing using a single branch (e.g., base network with branch_id = '').
+#   Args:
+#     as_sub_function: if True, return intermediate results to use in other functions.
+#   '''
+#   # model.load('')#'' is the base branch
 
-  true = 0
-  total = 0
-  true_class = np.zeros(model.num_class)
-  total_class = np.zeros(model.num_class)
-  total_pred =  np.zeros(model.num_class)
+#   true = 0
+#   total = 0
+#   true_class = np.zeros(model.num_class)
+#   total_class = np.zeros(model.num_class)
+#   total_pred =  np.zeros(model.num_class)
 
-  for i in range(0, X.shape[0], batch_size):
-    i1 = min(i+batch_size, X.shape[0])
+#   for i in range(0, X.shape[0], batch_size):
+#     i1 = min(i+batch_size, X.shape[0])
 
-    X_part = X[i:i1]
-    y_part = y[i:i1]
+#     X_part = X[i:i1]
+#     y_part = y[i:i1]
 
-    y_pred = model.predict(X_part)
+#     y_pred = model.predict(X_part)
 
-    if model.mode == 'classification':
-      #overall
-      true_part, total_part = get_overall_accuracy(y_part, y_pred)
-      true += true_part
-      total += total_part
+#     if model.mode == 'classification':
+#       #overall
+#       true_part, total_part = get_overall_accuracy(y_part, y_pred)
+#       true += true_part
+#       total += total_part
 
-      #class-wise, if needed
-      true_class_part, total_class_part, total_pred_part = get_class_wise_accuracy(y_part, y_pred, prf = True)
-      true_class += true_class_part
-      total_class += total_class_part
-      total_pred += total_pred_part
+#       #class-wise, if needed
+#       true_class_part, total_class_part, total_pred_part = get_class_wise_accuracy(y_part, y_pred, prf = True)
+#       true_class += true_class_part
+#       total_class += total_class_part
+#       total_pred += total_pred_part
 
-  if as_sub_function:
-    return true, total, true_class, total_class, total_pred
-  else:
-    if prf:
-      return get_prf(true_class, total_class, total_pred)#acc, acc_class
-    else:
-      return true / total
+#   if as_sub_function:
+#     return true, total, true_class, total_class, total_pred
+#   else:
+#     if prf:
+#       return get_prf(true_class, total_class, total_pred)#acc, acc_class
+#     else:
+#       return true / total
 
-  # y_pred = model.predict(X)
-  #
-  # if model.mode == 'classification':
-  #   #overall
-  #   true, total = get_overall_accuracy(y, y_pred)
-  #   #class-wise, if needed
-  #   true_class, total_class, total_pred = get_class_wise_accuracy(y, y_pred, prf = True)
-  #
-  # if prf:
-  #   return get_prf(true_class, total_class, total_pred)#acc, acc_class
-  # else:
-  #   return true / total
+#   # y_pred = model.predict(X)
+#   #
+#   # if model.mode == 'classification':
+#   #   #overall
+#   #   true, total = get_overall_accuracy(y, y_pred)
+#   #   #class-wise, if needed
+#   #   true_class, total_class, total_pred = get_class_wise_accuracy(y, y_pred, prf = True)
+#   #
+#   # if prf:
+#   #   return get_prf(true_class, total_class, total_pred)#acc, acc_class
+#   # else:
+#   #   return true / total
+
+
+def save_single(model, path, name = 'single'):
+  """
+  Save a single model checkpoint. For deep models, use model.save() when available.
+  """
+  if hasattr(model, 'save'):
+    model.save(name)
+    return
+  if hasattr(model, 'model'):
+    model.model.save_weights(path + '/' + name)
 
 
 def conv(filters, size, norm_type='batchnorm', apply_norm=True):

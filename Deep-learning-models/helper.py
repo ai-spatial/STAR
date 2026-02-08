@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import os
 
-from paras import *
+from config import *
 
 def data_partition(X_in, X_mask):
   '''
@@ -38,8 +38,15 @@ def check_split_validity(y_part, MIN_BRANCH_SAMPLE_SIZE):
   Check if the split is valid using minimum sample size
   '''
   n_sample = 1
-  for dim in range(len(y_part.shape)-1):
-    n_sample *= y_part.shape[dim]
+  if y_part.ndim == 1:
+    n_sample = y_part.shape[0]
+  else:
+    #for time-series or image data
+    for dim in range(len(y_part.shape)-1):
+      n_sample *= y_part.shape[dim]
+
+  print('n_sample: ', n_sample)
+  
   if n_sample >= MIN_BRANCH_SAMPLE_SIZE:
     return 1
   else:
@@ -156,6 +163,17 @@ def get_s_list_group_ids(s_list, group_ids):
   s_group = group_ids[s_list]
   return s_group
 
+def get_gid_to_s_map(y_val_gid, s0, s1):
+  '''
+  s_group back to s indices for continued steps in partitioning
+  '''
+  n_gid = int(np.max(y_val_gid)) + 1
+  gid_to_s_map = np.zeros((n_gid,))
+  gid_to_s_map[y_val_gid[s0.astype(int)].astype(int)] = s0
+  gid_to_s_map[y_val_gid[s1.astype(int)].astype(int)] = s1
+
+  return gid_to_s_map
+
 def get_branch_data_by_group(X, y, X_group, train_list, val_list, s0_group, s1_group):#, s0, s1; #from grid to group: X_loc, train_list, val_list, grid
 
   #train
@@ -215,19 +233,22 @@ def branch_id_to_loop_id(branch_id):
 
   return loop_id
 
-def init_s_branch(n_groups):
+def init_s_branch(n_groups, max_depth = MAX_DEPTH):
   #potential increase in number of grid cells due to imbalance partition (e.g., 0.25 + 0.75)
   max_diviation_rate = (((0.5 + FLEX_RATIO)**2)*4)**np.floor((MAX_DEPTH-1)/2)
   max_size_needed = np.ceil(n_groups*max_diviation_rate).astype(int)
 
-  s_branch = pd.DataFrame(np.zeros(max_size_needed))
+  s_branch = pd.DataFrame(-np.ones(max_size_needed, dtype = np.int32))
   s_branch = s_branch.rename(columns={0: ''})
 
   gid_list = np.empty(n_groups, dtype = np.int16)
   for i in range(n_groups):
       gid_list[i] = i#.astype(int)
 
-  s_branch[''][:gid_list.shape[0]] = gid_list
+  # s_branch[''][:gid_list.shape[0]] = gid_list #deprecated
+  # s_branch[''][:gid_list.shape[0]] is positional slicing, and (like normal Python slicing) it excludes the end. So it covered indices 0 through gid_list.shape[0] - 1.
+  # .loc is label-based and inclusive on both ends, so we subtract 1 to keep the same range.
+  s_branch.loc[:gid_list.shape[0] - 1, ""] = gid_list
 
   return s_branch, max_size_needed
 
@@ -248,31 +269,37 @@ def get_X_branch_id_by_group(X_group, s_branch, max_depth = MAX_DEPTH):
     X_branch_id[X_group == group_id] = branch_id
   return X_branch_id
 
-def assign_branch_id(X_loc, s_branch, X_dim = X_DIM, max_depth = MAX_DEPTH):
+def assign_branch_id(X_loc, s_branch, X_dim = X_DIM, max_depth = MAX_DEPTH, step_size = STEP_SIZE):
 
   test_data_grid = test_data_partition(s_branch, max_depth = max_depth)
 
-  step_size = STEP_SIZE / (2**np.floor((MAX_DEPTH-1)/2))
+  step_size = step_size / (2**np.floor((max_depth-1)/2))
   X_loc_grid = np.floor(X_loc[:, 0:2]/step_size).astype(int)
 
   X_branch_id = test_data_grid[X_loc_grid[:,0], X_loc_grid[:,1]]
 
   return X_branch_id
 
-def create_dir(model_dir = 'result'):
+def create_dir(model_dir = 'result', folder_name_ext = 'auto', separate_vis = False, \
+               parent_dir_for_eval = None):
   '''Create directory
   Args:
     model_dir: root level model directory
     dir: sub directory to store  data partitionings (e.g., space-partitionings) and related info.
       The partitions are auto-learned and in each partition data follows the same distribution P(y|X) or function X-->y
     dir_ckpt: sub directory to store the checkpoints
+    parent_dir_for_eval: folder created at the beginning of the evaluation (from main)
   '''
 
+  if parent_dir_for_eval is not None:
+    model_dir =  parent_dir_for_eval + '/' + model_dir
+
+  model_dir = model_dir + '_' + folder_name_ext
   cnt = 0#used to create new folders if directories already exist
   if os.path.isdir(model_dir):
-    while os.path.isdir(model_dir + '_auto_' + str(cnt)):
+    while os.path.isdir(model_dir + '_' + str(cnt)):
       cnt = cnt + 1
-    model_dir = model_dir + '_auto_' + str(cnt)
+    model_dir = model_dir + '_' + str(cnt)
     os.mkdir(model_dir)
   else:
     os.mkdir(model_dir)
@@ -282,6 +309,11 @@ def create_dir(model_dir = 'result'):
 
   os.mkdir(dir)
   os.mkdir(dir_ckpt)
+
+  if separate_vis:
+    dir_vis = model_dir + '/' + 'vis'
+    os.mkdir(dir_vis)
+    return model_dir, dir, dir_ckpt, dir_vis
 
   return model_dir, dir, dir_ckpt
 
@@ -308,3 +340,33 @@ def open_dir(model_dir):
     print('Error: Directory', dir_ckpt, 'does not exist.')
 
   return dir, dir_ckpt
+
+
+def get_spatial_range(X_loc):
+  xmin = np.min(X_loc[:,0])
+  xmax = np.max(X_loc[:,0])
+  ymin = np.min(X_loc[:,1])
+  ymax = np.max(X_loc[:,1])
+  return xmin, xmax, ymin, ymax
+
+def get_filter_thrd(grid_count, ratio = 0.2):
+  '''
+  Filter is needed to enhance the visualization. Otherwise, cells with small
+  number of samples (sensitive to small increase/decrease of correct predictions)
+  will show up and add noises to the map visualization.
+  '''
+  cnt_list = grid_count.reshape(-1)
+  cnt_list = np.nan_to_num(cnt_list)
+  cnt_list = np.sort(cnt_list, axis=None)
+  cnt_list_sum = np.sum(cnt_list)
+
+  cnt_cumu = 0
+  cnt_thrd = 0
+  for i in range(cnt_list.shape[0]):
+    cnt_cumu += cnt_list[i]
+    if cnt_cumu >= cnt_list_sum * ratio:
+      cnt_thrd = cnt_list[i]
+      break
+    cnt_thrd = cnt_list[i]
+
+  return cnt_thrd
