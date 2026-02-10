@@ -5,6 +5,8 @@ Best Paper Award in IEEE ICDM 2021. (More info: [STAR package](/))
 The tree-based version is at: [Tree-based-models](/Tree-based-models)
 
 ## Major updates
+- Added PyTorch versions (GeoDL_torch.py, models_torch.py, GeoDL_torch_main.py). Both TF and PyTorch versions are available now.
+- Simplified the process for adding new models, using a shared base STAR class. Minimal sub-class functions are expected (e.g., network definitions).
 - Added a new class `GeoDL` in `GeoDL.py` with standard functions: `fit`, `predict`, and `evaluate`.
 - Added a simplified demo script `GeoDL_main.py` to show end-to-end usage.
 - Refactored many other code files to fit into GeoDL.
