@@ -8,7 +8,6 @@
 #notes: added semantic segmentation
 
 import numpy as np
-import tensorflow as tf
 import pandas as pd
 from scipy import stats
 from scipy import ndimage
@@ -74,36 +73,29 @@ def get_class_wise_stat(y_true, y_pred, y_group, mode = MODE, onehot = ONEHOT):
 
   if mode == 'classification':
     # n_sample = y_true.shape[0]
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
 
     if len(y_true.shape)==1:
-      y_true = tf.one_hot(y_true, NUM_CLASS)
-      y_pred = tf.one_hot(y_pred, NUM_CLASS)
-    else:
-    #this is to make coding consistent (tf functions might be used in this function when implementing the RF version)
-      y_true = tf.convert_to_tensor(y_true)
-      y_pred = tf.convert_to_tensor(y_pred)
-      # tf.convert_to_tensor(numpy_array, dtype=tf.float32)
+      y_true = np.eye(NUM_CLASS)[np.ravel(y_true).astype(int)]
+      y_pred = np.eye(NUM_CLASS)[np.ravel(y_pred).astype(int)]
+    # else: keep as-is (already one-hot or soft)
 
     #reshape image or time-series labels
     #can handle shapes of N x m x m x k, where m is img size for semantic segmentation
     #or shapes of N x t x k, where t is the length of a sequence
     if len(y_true.shape)>=3:
-      # n_dims = len(y_true.shape)
-      # data_point_size = 1
-      # for dim in range(1,n_dims-1):
-      #   data_point_size *= y_true.shape[dim]
       n_pre = y_true.shape[0]
-      y_true = tf.reshape(y_true, [-1,NUM_CLASS])#tf.reshape takes numpy arrays
-      y_pred = tf.reshape(y_pred, [-1,NUM_CLASS])
+      y_true = np.reshape(y_true, [-1, NUM_CLASS])
+      y_pred = np.reshape(y_pred, [-1, NUM_CLASS])
       n_after = y_true.shape[0]
-
-      data_point_size = int(n_after/n_pre)
+      data_point_size = int(n_after / n_pre)
       y_group = y_group.astype(int)
       y_group = np.repeat(y_group, data_point_size)
 
-    stat = tf.keras.metrics.categorical_accuracy(y_true, y_pred)
-    stat = stat.numpy()
-    y_true = np.array(y_true)
+    # categorical accuracy: 1 if argmax matches, else 0 (per sample)
+    stat = (np.argmax(y_true, axis=-1) == np.argmax(y_pred, axis=-1)).astype(np.float64)
+    y_true = np.asarray(y_true)
 
     #select_class (should not be used before categorical_accuracy,
     #which is not correct when there is only one class)
@@ -122,15 +114,10 @@ def get_class_wise_stat(y_true, y_pred, y_group, mode = MODE, onehot = ONEHOT):
     return y_true_group, y_true_value, true_pred_group, true_pred_value
 
   elif MODE == 'regression':
-    # #reshape image or time-series labels
-    # if len(y_true.shape)>=3:
-    #   y_true = tf.reshape(y_true, [-1,NUM_CLASS])#tf.reshape takes numpy arrays
-    #   y_pred = tf.reshape(y_pred, [-1,NUM_CLASS])
-
-    #may (or may not) need to revise for regression using scan methods!!!
-    stat = tf.keras.losses.MSE(y_true, y_pred)
-    
-    stat = np.sqrt(stat.numpy())#equivalent
+    y_true = np.asarray(y_true, dtype=np.float64)
+    y_pred = np.asarray(y_pred, dtype=np.float64)
+    # per-sample MSE then sqrt (equivalent to tf.keras.losses.MSE then .numpy())
+    stat = np.sqrt(np.mean((y_true - y_pred) ** 2, axis=-1))
     stat_id, stat_value = groupby_sum(stat, y_group)#output of stat_value should be one-dimensional
     count_id, count_value = groupby_sum(np.ones(stat.shape[0]), y_group)
     
@@ -460,40 +447,33 @@ def get_top_cells(g, flex = FLEX_OPTION, flex_ratio = FLEX_RATIO, flex_type = FL
 def get_score(y_true, y_pred, mode = MODE):
 
   score = None
+  y_true = np.asarray(y_true)
+  y_pred = np.asarray(y_pred)
+
   if mode == 'classification':
     if len(y_true.shape)==1:
-      y_true = tf.one_hot(y_true, NUM_CLASS)
-      y_pred = tf.one_hot(y_pred, NUM_CLASS)
-    else:
-    #this is to make coding consistent for later parts of the function (where tf functions are used)
-      y_true = tf.convert_to_tensor(y_true)
-      y_pred = tf.convert_to_tensor(y_pred)
-      # tf.convert_to_tensor(numpy_array, dtype=tf.float32)
+      y_true = np.eye(NUM_CLASS)[np.ravel(y_true).astype(int)]
+      y_pred = np.eye(NUM_CLASS)[np.ravel(y_pred).astype(int)]
 
-    #reshape image or time-series labels
     if len(y_true.shape)>=3:
-      y_true = tf.reshape(y_true, [-1,NUM_CLASS])#tf.reshape takes numpy arrays
-      y_pred = tf.reshape(y_pred, [-1,NUM_CLASS])
+      y_true = np.reshape(y_true, [-1, NUM_CLASS])
+      y_pred = np.reshape(y_pred, [-1, NUM_CLASS])
 
-    # y_pred = to_categorical(np.argmax(arr, axis=1), 3)
-    score = tf.keras.metrics.categorical_accuracy(y_true, y_pred)
-    score = score.numpy()
+    score = (np.argmax(y_true, axis=-1) == np.argmax(y_pred, axis=-1)).astype(np.float64)
 
-    #select_class
-    #here need to remove the rows from non-selected classes
-    #which will otherwise affect the diff margin sizes in sig_test()
     if SELECT_CLASS is not None:
       score_select = np.zeros(score.shape)
       for i in range(SELECT_CLASS.shape[0]):
         class_id = int(SELECT_CLASS[i])
-        score_select[y_true.numpy()[:,class_id]==1] = 1
+        score_select[y_true[:, class_id] == 1] = 1
       score = score[score_select.astype(bool)]
-      '''Check what if score is empty?
-      '''
 
   elif mode == 'regression':
-    score = tf.keras.losses.MSE(y_true, y_pred)#reduction=tf.keras.losses.Reduction.NONE
-    score = - score.numpy()
+    y_true = np.asarray(y_true, dtype=np.float64)
+    y_pred = np.asarray(y_pred, dtype=np.float64)
+    # per-sample squared error, then negate (for sig test: higher is better)
+    se = (y_true.reshape(-1) - y_pred.reshape(-1)) ** 2
+    score = -se
 
   return score
 
@@ -518,7 +498,8 @@ def scan(y_true_value, true_pred_value, min_sample,
 
   #init q
   q = np.zeros(y_true_value.shape[1])
-  q_init = np.nan_to_num(c/b)
+  with np.errstate(divide='ignore', invalid='ignore'):
+    q_init = np.nan_to_num(c/b)
   for i in range(q_init.shape[1]):
     q_class = q_init[:,i]
     # s_class, _ = get_top_cells(q_class)
@@ -546,7 +527,8 @@ def scan(y_true_value, true_pred_value, min_sample,
     log_lr = np.sum(g[s0])
 
     #update q
-    q = np.nan_to_num(np.sum(c[s0],0) / np.sum(b[s0],0))
+    with np.errstate(divide='ignore', invalid='ignore'):
+      q = np.nan_to_num(np.sum(c[s0],0) / np.sum(b[s0],0))
     q[q == 0] = 1
     q[q_filter == 1] = 1
 

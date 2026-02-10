@@ -13,6 +13,7 @@ import numpy as np
 
 #Model choices
 MODEL_CHOICE = 'DNN'
+# MODEL_CHOICE = 'LSTM'
 # Please refer to other code version in github for deep learning models
 #Task (only classification version for RF has been tested)
 MODE = 'classification'#'regression'
@@ -47,7 +48,7 @@ MD_THRD = 0.001#0.005#mean_diff thrd
 #**************************ATTENTION NEEDED [2, total 3]**************************
 #Train-val-test split
 #Used as default function inputs
-TRAIN_RATIO = 0.6
+TRAIN_RATIO = 0.2#0.6#for faster demo experiments
 VAL_RATIO = 0.20#subset from training, e.g., 0.2 means 20% of training data will be set as validation
 TEST_RATIO = 1 - TRAIN_RATIO
 #*********************************************************************************
@@ -173,14 +174,14 @@ MODEL_DIR = 'result'
 
 
 #Training related parameters: LSTM
+N_TIME = 3
+N_TIME_FEATURE = 10
+N_OTHER_FEATURE = 3
 if MODEL_CHOICE == 'LSTM':
   TIME_SERIES = True
   PRETRAIN_EPOCH = 60
   EPOCH_TRAIN = 60
   BATCH_SIZE = 256*256
-  N_TIME = 33
-  N_TIME_FEATURE = 10
-  N_OTHER_FEATURE = 3
   LEARNING_RATE = 0.001
   CLASSIFICATION_LOSS = 'categorical_crossentropy'
   REGRESSION_LOSS = 'mean_squared_error'
@@ -194,76 +195,3 @@ if MODEL_CHOICE == 'UNET':
   CLASSIFICATION_LOSS = 'categorical_crossentropy'
   REGRESSION_LOSS = 'mean_squared_error'
 
-
-
-
-
-
-
-
-# import numpy as np
-#
-# '''Model choice'''
-# MODEL_CHOICE = 'DNN'  # 'DNN' or 'UNet'
-#
-# #Task
-# MODE = 'classification'#'regression'
-#
-# '''Partitioning parameters'''
-# MIN_DEPTH = 2
-# MAX_DEPTH = 6
-# N_JOBS = 1
-# MIN_BRANCH_SAMPLE_SIZE = 100  # minimum number of samples needed to continue partitioning
-# MIN_SCAN_CLASS_SAMPLE = 100  # minimum number of samples needed for a class to be considered during partitioning optimization
-# FLEX_RATIO = 0.1  # defines max size difference between two partitions in each split
-# FLEX_OPTION = False
-# FLEX_TYPE = 'n_group'
-# MIN_GROUP_POS_SAMPLE_SIZE_FLEX = 10
-#
-# '''Significance testing'''
-# SIGLVL = 0.01  # significance level
-# ES_THRD = 0.8  # effect size threshold
-# MD_THRD = 0.005  # mean_diff threshold
-#
-# '''Training parameters'''
-# PRETRAIN_EPOCH = 40  # stabilize the model parameters before partitioning starts
-# EPOCH_TRAIN = 40  # number of epochs to train after each split
-# BATCH_SIZE = 64
-# LEARNING_RATE = 0.0001
-# CLASSIFICATION_LOSS = 'categorical_crossentropy'
-# REGRESSION_LOSS = 'mean_squared_error'
-# ONEHOT = True
-# TRAIN_RATIO = 0.2
-# VAL_RATIO = TRAIN_RATIO
-# TEST_RATIO = 1 - TRAIN_RATIO - VAL_RATIO
-#
-# '''Data parameters'''
-# INPUT_SIZE = 13#10  # number of features
-# NUM_CLASS = 2#23
-# X_DIM = np.array([4096, 4096]).astype(int)  # spatial size of the entire tile
-# STEP_SIZE = int(4096 / 8)  # grid cell size for grouping
-# GRID_DIM = np.array([int(X_DIM[0] / STEP_SIZE), int(X_DIM[1] / STEP_SIZE)])
-# GRID_COLS = [2, 3]  # columns to store grid-based locations in X_loc (shape: Nx4)
-# N_GROUPS = 64  # number of grid-cell groups
-# X_DIM_RAW = X_DIM
-#
-# #Additional parameters
-# multi = False
-# if multi:
-#   SELECT_CLASS = np.array([1,2,3,4,5,6,7])
-#   NUM_CLASS = 9
-# else:
-#   SELECT_CLASS = np.array([1])
-#   NUM_CLASS = 2
-#
-# #Spatial contiguity refinement
-# CONTIGUITY = False
-# REFINE_TIMES = 0
-# MIN_COMPONENT_SIZE = 10
-#
-# PREDEFINED_GROUPS = False
-# if PREDEFINED_GROUPS:
-#   CONTIGUITY = False
-#
-# EVAL_EXT = ''
-#
