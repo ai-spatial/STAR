@@ -7,6 +7,10 @@ This repository includes several versions of the framework for different types o
 * [Tree-based-models](Tree-based-models): Random forest
 * **Model-specific Demo and ReadMe available in each folder.**
 
+
+## High-level illustration:
+<img src="Deep-learning-models/demo_img/GeoDL_overall.png" alt="Training" width="80%"/>
+
 ## Paper information
 
 **[ICDM'21]** Yiqun Xie*, Erhu He*, Xiaowei Jia, Han Bao, Xun Zhou, Rahul Ghosh and Praveen Ravirathinam. A Statistically-Guided Deep Network Transformation and Moderation Framework for Data with Spatial Heterogeneity. IEEE International Conference on Data Mining (ICDM'21), 2021. **Best Paper Award.**
@@ -35,5 +39,3 @@ This repository includes several versions of the framework for different types o
 }
 ```
 
-## High-level illustration:
-<img src="Deep-learning-models/demo_img/GeoDL_overall.png" alt="Training" width="80%"/>
